@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     */
 
     // Declare your algorithm object 
-    MyBugAlgorithm algo;
+    MyBugAlgorithm algo; // Add hyperparameters here, to tune dt
     
     {
         // Call your algorithm on the problem
