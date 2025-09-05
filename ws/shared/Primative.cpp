@@ -1,3 +1,4 @@
+#include <Eigen/Dense>
 #include "Primative.h"
 
 double LinearPrimative::evaluatePoint(Eigen::Vector2d q) {
