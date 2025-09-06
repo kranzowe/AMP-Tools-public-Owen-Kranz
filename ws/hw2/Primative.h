@@ -6,7 +6,7 @@ class LinearPrimative {
         Eigen::Vector2d point_a; // a point on the line
         Eigen::Vector2d point_b; // a second point on the line
 
-        double evaluatePoint(Eigen::Vector2d);
+        double evaluatePoint(Eigen::Vector2d) const;
 };
 
 #endif

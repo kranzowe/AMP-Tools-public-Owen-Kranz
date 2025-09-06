@@ -1,6 +1,6 @@
 #include "Primative.h"
 #include "AMPCore.h"
-double LinearPrimative::evaluatePoint(Eigen::Vector2d q) {
+double LinearPrimative::evaluatePoint(Eigen::Vector2d q) const{
     // defines linear primative with the two points on the class and
     // returns ax + by - c <= 0
 

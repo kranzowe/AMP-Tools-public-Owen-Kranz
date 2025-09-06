@@ -7,6 +7,7 @@
 // Include any custom headers you created in your workspace
 #include "MyBugAlgorithm.h"
 #include "Primative.h"
+#include "MyObstacle.h"
 
 using namespace amp;
 
@@ -22,7 +23,37 @@ int main(int argc, char** argv) {
 
 
     // testing an obstacle
-    
+    MyObstacle test_ob; // gonna make a square
+    LinearPrimative prim1;
+    test_prim.point_a = Eigen::Vector2d(5, -5);
+    test_prim.point_b = Eigen::Vector2d(5, 5);
+    LinearPrimative prim2;
+    test_prim.point_a = Eigen::Vector2d(5, 5);
+    test_prim.point_b = Eigen::Vector2d(-5, 5);
+    LinearPrimative prim3;
+    test_prim.point_a = Eigen::Vector2d(-5, 5);
+    test_prim.point_b = Eigen::Vector2d(-5, -5);
+    LinearPrimative prim4;
+    test_prim.point_a = Eigen::Vector2d(-5, 5);
+    test_prim.point_b = Eigen::Vector2d(-5, -5);
+
+    test_ob.primatives.push_back(prim1);
+    test_ob.primatives.push_back(prim2);
+    test_ob.primatives.push_back(prim3);
+    test_ob.primatives.push_back(prim4);
+
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0, 0)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(5, 5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(-5, -5)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(5.00001, 0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.000001, -5.000001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(5.000001, 5.000001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.00001, 0)) << std::endl;
+
+
+
+
+
     
     
     
