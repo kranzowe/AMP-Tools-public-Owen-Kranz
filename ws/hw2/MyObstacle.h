@@ -11,6 +11,8 @@ class MyObstacle {
         std::vector<LinearPrimative> primatives;
 
         bool collisionCheck(Eigen::Vector2d) const;
+
+        void defineWithPoints(const std::vector<Eigen::Vector2d>& vertices);
 };
 
 #endif

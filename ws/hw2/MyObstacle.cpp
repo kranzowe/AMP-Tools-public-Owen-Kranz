@@ -1,15 +1,33 @@
 #include "MyObstacle.h"
-
+#include "Primative.h"
 #include "AMPCore.h"
 
 bool MyObstacle::collisionCheck(Eigen::Vector2d q) const {
 
-    // loop thru da primatives, if we find a o or negative, COLLISIOONNNNN :o
+    // loop thru da primatives, if we find all are 0 or negative, COLLISIOONNNNN :o
     for (const auto& primative : primatives){
-        if (primative.evaluatePoint(q) <= 0) {
-            return true;
+        if (primative.evaluatePoint(q) > 1e-8) { // using some smol number for floating point
+            return false;
         }
     }
-    // everything >0
-    return false;
+    // everything <= 0
+    return true;
+}
+
+void MyObstacle::defineWithPoints(const std::vector<Eigen::Vector2d>& vertices) {
+    /* this method loops through a set of CCW vertices and defines primatives and
+    stores them in the primative vector. GPT helped me with syntax here cuz c++ loops r hard
+    */
+
+    primatives.clear(); //clear existing
+
+    size_t n = vertices.size();
+    if (n < 2) return;
+
+    for (size_t i = 0; i < n; ++i) {
+        LinearPrimative prim;
+        prim.point_a = vertices[i];
+        prim.point_b = vertices[(i + 1) % n]; // %n ensures last to first happens
+        primatives.push_back(prim);
+    }
 }

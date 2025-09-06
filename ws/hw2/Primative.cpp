@@ -1,20 +1,19 @@
 #include "Primative.h"
 #include "AMPCore.h"
-double LinearPrimative::evaluatePoint(Eigen::Vector2d q) const{
+double LinearPrimative::evaluatePoint(double q) const{
     // defines linear primative with the two points on the class and
-    // returns ax + by - c <= 0
+    // returns ax + by + c <= 0
+    // from two points 
+    // a = (y2-y1)
+    // b = -(x2-x1)
+    // c = x2*y1 - x1*y2
 
-    // tbh, I think this is easier with the 2D cross product.
-
-    Eigen::Vector2d v_line = point_b - point_a;
-    Eigen::Vector2d v_point = q - point_a;
-
-    // this returns the 2D cross product. 
-    // if 0, they are parallel (point is on the line)
-    // if negative, point is to the left of the line
-    // if positive, point is to the right of the line
+    double a = point_b[1] - point_a[1];
+    double b = -(point_b[0] - point_a[0]);
+    double c = (point_b[0]*point_a[1]) - (point_a[0]*point_b[1]);
     
-    // so by my convention, I define polygons CCW using vertices
-    return v_line[0]*v_point[1] - v_line[1]*v_point[0];// a rearranged point slope form
+    // so by my convention, all points to the left of the vector 
+    // point a to point b are negative. therefore I define polygons cCW using vertices
+    return a*q[0] + b*q[1] + c;
 
 }

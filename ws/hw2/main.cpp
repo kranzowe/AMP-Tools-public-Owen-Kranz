@@ -15,48 +15,64 @@ int main(int argc, char** argv) {
     /*TESTS TESTS TESTS TESTS */
     // tests that this primative thing works
     LinearPrimative test_prim;
-    test_prim.point_a = Eigen::Vector2d(0, 0);
-    test_prim.point_b = Eigen::Vector2d(1, 1);
-    std::cout << "test point should be <0: " << test_prim.evaluatePoint(Eigen::Vector2d(1, 0)) << std::endl;
-    std::cout << "test point should be 0: " << test_prim.evaluatePoint(Eigen::Vector2d(1, 1)) << std::endl;
-    std::cout << "test point should be >0: " << test_prim.evaluatePoint(Eigen::Vector2d(0, 1)) << std::endl;
+    test_prim.point_a = Eigen::Vector2d(0.0, 0.0);
+    test_prim.point_b = Eigen::Vector2d(1.0, 1.0);
+    std::cout << "test point should be >0: " << test_prim.evaluatePoint(Eigen::Vector2d(1.0, 0.0)) << std::endl;
+    std::cout << "test point should be 0: " << test_prim.evaluatePoint(Eigen::Vector2d(1.0, 1.0)) << std::endl;
+    std::cout << "test point should be <0: " << test_prim.evaluatePoint(Eigen::Vector2d(0.0, 1.0)) << std::endl;
+
+    LinearPrimative test_prim2;
+    test_prim2.point_a = Eigen::Vector2d(5, -5);
+    test_prim2.point_b = Eigen::Vector2d(5, 5);
+    std::cout << "test point should be <0: " << test_prim2.evaluatePoint(Eigen::Vector2d(0, 0)) << std::endl;
+    std::cout << "test point should be 0: " << test_prim2.evaluatePoint(Eigen::Vector2d(5, 0)) << std::endl;
+    std::cout << "test point should be >0: " << test_prim2.evaluatePoint(Eigen::Vector2d(5.0001, 0)) << std::endl;
 
 
     // testing an obstacle
     MyObstacle test_ob; // gonna make a square
     LinearPrimative prim1;
-    test_prim.point_a = Eigen::Vector2d(5, -5);
-    test_prim.point_b = Eigen::Vector2d(5, 5);
+    prim1.point_a = Eigen::Vector2d(5.0, 5.0);
+    prim1.point_b = Eigen::Vector2d(-5.0, 5.0);
     LinearPrimative prim2;
-    test_prim.point_a = Eigen::Vector2d(5, 5);
-    test_prim.point_b = Eigen::Vector2d(-5, 5);
+    prim2.point_a = Eigen::Vector2d(-5.0, 5.0);
+    prim2.point_b = Eigen::Vector2d(-5.0, -5.0);
     LinearPrimative prim3;
-    test_prim.point_a = Eigen::Vector2d(-5, 5);
-    test_prim.point_b = Eigen::Vector2d(-5, -5);
+    prim3.point_a = Eigen::Vector2d(-5.0, -5.0);
+    prim3.point_b = Eigen::Vector2d(5.0, -5.0);
     LinearPrimative prim4;
-    test_prim.point_a = Eigen::Vector2d(-5, 5);
-    test_prim.point_b = Eigen::Vector2d(-5, -5);
+    prim4.point_a = Eigen::Vector2d(5.0, -5.0);
+    prim4.point_b = Eigen::Vector2d(5.0, 5.0);
 
     test_ob.primatives.push_back(prim1);
     test_ob.primatives.push_back(prim2);
     test_ob.primatives.push_back(prim3);
     test_ob.primatives.push_back(prim4);
 
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0, 0)) << std::endl;
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(5, 5)) << std::endl;
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(-5, -5)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(5.00001, 0)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.000001, -5.000001)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.0, 0.0)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(5.0, 5.0)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.0, -5.0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(15.00001, 0.0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-15.000001, -5.000001)) << std::endl;
     std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(5.000001, 5.000001)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.00001, 0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(-5.00001, 0.0)) << std::endl;
+
+    // tests obstacle with vertice definition
+    std::vector<Eigen::Vector2d> vertices = {
+        Eigen::Vector2d(0.0, 0.0),
+        Eigen::Vector2d(1.0, 0.0),
+        Eigen::Vector2d(0.5, 1.0)
+    };
+    MyObstacle test_ob2;
+    test_ob.defineWithPoints(vertices);
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.0, 0.0)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 0.5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 1.0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.05, -0.001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.1, 0.2001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 1.0001)) << std::endl;
 
 
-
-
-
-    
-    
-    
     /*END TESTS END TESTS END TESTS*/
 
 
