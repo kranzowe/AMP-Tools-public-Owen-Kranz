@@ -6,10 +6,29 @@
 
 // Include any custom headers you created in your workspace
 #include "MyBugAlgorithm.h"
+#include "Primative.h"
 
 using namespace amp;
 
 int main(int argc, char** argv) {
+    /*TESTS TESTS TESTS TESTS */
+    // tests that this primative thing works
+    LinearPrimative test_prim;
+    test_prim.point_a = Eigen::Vector2d(0, 0);
+    test_prim.point_b = Eigen::Vector2d(1, 1);
+    std::cout << "test point should be <0: " << test_prim.evaluatePoint(Eigen::Vector2d(1, 0)) << std::endl;
+    std::cout << "test point should be 0: " << test_prim.evaluatePoint(Eigen::Vector2d(1, 1)) << std::endl;
+    std::cout << "test point should be >0: " << test_prim.evaluatePoint(Eigen::Vector2d(0, 1)) << std::endl;
+
+
+    // testing an obstacle
+    
+    
+    
+    
+    /*END TESTS END TESTS END TESTS*/
+
+
     /*    Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
 

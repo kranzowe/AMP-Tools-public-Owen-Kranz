@@ -1,6 +1,6 @@
 #ifndef PRIMATIVE_H
 #define PRIMATIVE_H
-#include <Eigen/Dense>
+#include "AMPCore.h"
 class LinearPrimative {
     public:
         Eigen::Vector2d point_a; // a point on the line
