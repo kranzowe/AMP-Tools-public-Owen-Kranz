@@ -1,6 +1,7 @@
-#include "MyObstacle.h"
 #include "Primative.h"
+#include "MyObstacle.h"
 #include "AMPCore.h"
+
 
 bool MyObstacle::collisionCheck(Eigen::Vector2d q) const {
 

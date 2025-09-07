@@ -1,9 +1,8 @@
-#ifndef OBSTACLE_H
-#define OBSTACLE_H
+#ifndef MYOBSTACLE_H
+#define MYOBSTACLE_H
 
 #include "AMPCore.h"
 #include "Primative.h"
-#include <vector>
 
 class MyObstacle {
     public:

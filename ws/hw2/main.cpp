@@ -8,6 +8,7 @@
 #include "MyBugAlgorithm.h"
 #include "Primative.h"
 #include "MyObstacle.h"
+#include "MyAgent.h"
 
 using namespace amp;
 
@@ -64,14 +65,42 @@ int main(int argc, char** argv) {
         Eigen::Vector2d(0.5, 1.0)
     };
     MyObstacle test_ob2;
-    test_ob.defineWithPoints(vertices);
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.0, 0.0)) << std::endl;
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 0.5)) << std::endl;
-    std::cout << "test collision should be TRUE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 1.0)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.05, -0.001)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.1, 0.2001)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob.collisionCheck(Eigen::Vector2d(0.5, 1.0001)) << std::endl;
+    test_ob2.defineWithPoints(vertices);
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.0, 0.0)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.5, 0.5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.5, 1.0)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.05, -0.001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.1, 0.2001)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.5, 1.0001)) << std::endl;
 
+    // testing the agent and its basic functions
+    //test moving
+    PointAgent test_agent;
+    test_agent.move(1.0);
+    std::cout << "test point should be 1,0: " << test_agent.x << std::endl;
+    test_agent.x = Eigen::Vector2d(-1.0, -1.0);
+    test_agent.heading = Eigen::Vector2d(-1.0, -1.0);
+    test_agent.move(0.1);
+    std::cout << "test point should be -1.1414,-1.1414: " << test_agent.x << std::endl;
+
+    // test rotate
+    test_agent.heading = Eigen::Vector2d(1.0, 1.0);
+    test_agent.rotate(45.0);
+    std::cout << "test point should be 0.0, 1.0: " << test_agent.heading << std::endl;
+    test_agent.rotate(-45.0);
+    std::cout << "test point should be 0.707, 0.707: " << test_agent.heading << std::endl;
+
+    // test rotate until free
+    // gonna use that old test_ob which is a 2d square
+    std::vector test_obs = {test_ob};
+    double test_eps = 1e-4;
+    double test_dtheta = 1e-5;
+    test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, -5.0 - test_eps/3.0);
+    test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout << "test heading should close to -0.707, 0.707: " << test_agent.heading << std::endl;
+    test_agent.x = Eigen::Vector2d(0, 5.0 + test_eps/3.0);
+    test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout << "test heading should close to -1.0, 0.0: " << test_agent.heading << std::endl;
 
     /*END TESTS END TESTS END TESTS*/
 

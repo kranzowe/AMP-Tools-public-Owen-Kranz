@@ -10,7 +10,8 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
     std::vector<MyObstacle> my_obstacles;
     for (const auto& obstacle : problem.obstacles) {
         MyObstacle my_ob;
-        my_obstacles.push_back(my_ob.defineWithPoints(obstacle.verticesCCW()))
+        my_ob.defineWithPoints(obstacle.verticesCCW());
+        my_obstacles.push_back(my_ob);
     };
     
     
