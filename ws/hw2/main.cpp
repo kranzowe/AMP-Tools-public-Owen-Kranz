@@ -74,21 +74,13 @@ int main(int argc, char** argv) {
     std::cout << "test collision should be FALSE: " << test_ob2.collisionCheck(Eigen::Vector2d(0.5, 1.0001)) << std::endl;
 
     // testing the agent and its basic functions
-    //test moving
     PointAgent test_agent;
-    test_agent.move(1.0);
-    std::cout << "test point should be 1,0: " << test_agent.x << std::endl;
-    test_agent.x = Eigen::Vector2d(-1.0, -1.0);
-    test_agent.heading = Eigen::Vector2d(-1.0, -1.0);
-    test_agent.move(0.1);
-    std::cout << "test point should be -1.1414,-1.1414: " << test_agent.x << std::endl;
-
     // test rotate
     test_agent.heading = Eigen::Vector2d(1.0, 1.0);
     test_agent.rotate(45.0);
-    std::cout << "test point should be 0.0, 1.0: " << test_agent.heading << std::endl;
+    std::cout << "test point should be 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
     test_agent.rotate(-45.0);
-    std::cout << "test point should be 0.707, 0.707: " << test_agent.heading << std::endl;
+    std::cout << "test point should be 0.707, 0.707: " << test_agent.heading.transpose() << std::endl;
 
     // test rotate until free
     // gonna use that old test_ob which is a 2d square
@@ -96,12 +88,58 @@ int main(int argc, char** argv) {
     double test_eps = 1e-4;
     double test_dtheta = 1e-5;
     test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, -5.0 - test_eps/3.0);
-    test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "test heading should close to -0.707, 0.707: " << test_agent.heading << std::endl;
+    bool converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout << "converge?" << converged <<"heading should close to -0.707, 0.707: " << test_agent.heading.transpose() << std::endl;
     test_agent.x = Eigen::Vector2d(0, 5.0 + test_eps/3.0);
-    test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "test heading should close to -1.0, 0.0: " << test_agent.heading << std::endl;
+    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout <<"converge? " << converged <<" heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
+    test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, 1.0);
+    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout <<"converge? " << converged <<" heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
 
+    // now gonna add an object to make it convex :o. 
+
+    std::vector<Eigen::Vector2d> vertices2 = {
+        Eigen::Vector2d(2.0, 5.0),
+        Eigen::Vector2d(2.0, 6.0),
+        Eigen::Vector2d(0.0, 6.0),
+        Eigen::Vector2d(0.0, 5.0),
+    };
+    MyObstacle test_ob3;
+    test_ob3.defineWithPoints(vertices2);
+
+    test_obs = {test_ob, test_ob3};
+    test_agent.x = Eigen::Vector2d(0.0 - test_eps/3.0, 5.0 + test_eps/3.0);
+    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout << "converge fails: " << converged << std::endl;
+    converged = test_agent.rotateToCircumnavigateRHInteriorCorner(test_obs, test_dtheta, test_eps);
+    std::cout << "converge?" << converged <<"heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
+    test_agent.x = Eigen::Vector2d(2.0 + test_eps/3.0, 5.0 + test_eps/3.0);
+    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    std::cout << "converge fails: " << converged << std::endl;
+    converged = test_agent.rotateToCircumnavigateRHInteriorCorner(test_obs, test_dtheta, test_eps);
+    std::cout << "converge?" << converged <<"heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
+
+
+    // tests moving puts you just outside an object
+    bool collided;
+    test_agent.x = Eigen::Vector2d(5.1, 5.1);
+    test_agent.heading = Eigen::Vector2d(1.0, 1.0);
+    collided = test_agent.move(test_obs, 1.0, test_eps);
+    std::cout <<  "collision FALSE: "<< collided <<"test point should be 6.1, 6.1: " << test_agent.x.transpose() << std::endl;
+    test_agent.x = Eigen::Vector2d(-10, -10);
+    test_agent.heading = Eigen::Vector2d(-1.0, -1.0);
+    collided = test_agent.move(test_obs, 0.1, test_eps);
+    std::cout <<  "collision FALSE: "<< collided <<"test point should be -10.1414,-10.1414: " << test_agent.x.transpose() << std::endl;
+    test_agent.x = Eigen::Vector2d(0, -6);
+    test_agent.heading = Eigen::Vector2d(0.0, 2.0);
+    collided = test_agent.move(test_obs, 1.0, test_eps);
+    std::cout << "collision TRUE: "<< collided <<"test point should be 0.0, -5.00001 " << test_agent.x.transpose() << std::endl;
+    test_agent.x = Eigen::Vector2d(3, 6);
+    test_agent.heading = Eigen::Vector2d(-1.0, -1.0);
+    collided = test_agent.move(test_obs, 1.0, test_eps);
+    std::cout << "collision TRUE: "<< collided <<"test point should be 2.00001, 5.00001 " << test_agent.x.transpose() << std::endl;
+    
     /*END TESTS END TESTS END TESTS*/
 
 

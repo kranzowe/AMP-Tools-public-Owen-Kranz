@@ -1,5 +1,6 @@
 #include "MyBugAlgorithm.h"
 #include "MyObstacle.h"
+#include "MyAgent.h"
 
 // Implement your methods in the `.cpp` file, for example:
 amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
@@ -13,6 +14,13 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
         my_ob.defineWithPoints(obstacle.verticesCCW());
         my_obstacles.push_back(my_ob);
     };
+
+    // initialize the agent
+    PointAgent agent;
+    agent.x = problem.q_init;
+
+    
+
     
     
     
