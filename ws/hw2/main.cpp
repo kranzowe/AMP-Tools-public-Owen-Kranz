@@ -169,10 +169,15 @@ int main(int argc, char** argv) {
     */
 
     // Declare your algorithm object 
-    MyBugAlgorithm algo; // Add hyperparameters here, to tune dt
+    const double dt = 0.01;
+    const double epsilon = 1e-4;
+    const double dtheta = 1e-3;
+    MyBugAlgorithm algo(dt, dtheta, epsilon); 
     
     {
         // Call your algorithm on the problem
+
+        // DEFINE HYPER PARAMETERS
         amp::Path2D path = algo.plan(problem);
 
         // Check your path to make sure that it does not collide with the environment 

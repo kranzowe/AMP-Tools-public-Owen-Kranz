@@ -6,6 +6,8 @@
 /// @brief Declare your bug algorithm class here. Note this class derives the bug algorithm class declared in HW2.h
 class MyBugAlgorithm : public amp::BugAlgorithm {
     public:
+        MyBugAlgorithm(double dt, double dtheta, double epsilon)
+        : dt(dt), dtheta(dtheta), epsilon(epsilon) {}
         // Override and implement the bug algorithm in the plan method. The methods are declared here in the `.h` file
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 
@@ -13,4 +15,5 @@ class MyBugAlgorithm : public amp::BugAlgorithm {
     
     private:
         // Add any member variables here...
+        double dt, dtheta, epsilon;
 };

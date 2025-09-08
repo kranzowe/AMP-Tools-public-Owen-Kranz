@@ -151,12 +151,8 @@ bool PointAgent::rotateToCircumnavigateRH(const std::vector<MyObstacle> obstacle
         }
     };
 
-    if (total_rotation > 1000){ //prevent not converging
-        std::cout << "ROTATE TO CIRCUMNAV DID NOT CONVERGE " << std::endl;
-        return 0;
-
-    }
-
+    std::cout << "ROTATE TO CIRCUMNAV DID NOT CONVERGE " << std::endl;
+    return 0;
 
 };
 
@@ -241,18 +237,14 @@ bool PointAgent::rotateToCircumnavigateRHInteriorCorner(const std::vector<MyObst
         }
     };
 
-    if (total_rotation > 1000){ //prevent not converging
-        std::cout << "ROTATE TO CIRCUMNAV interior DID NOT CONVERGE " << std::endl;
-
-    }
-
-
+    std::cout << "ROTATE TO CIRCUMNAV interior DID NOT CONVERGE " << std::endl;
+    return 0;
 };
 
 void PointAgent::pointAtGoal(const Eigen::Vector2d q_goal){
     //updates heading to be a unit vector in direction of goal
     Eigen::Vector2d vec_to_goal = q_goal - x;
-    heading = vec_to_goal.normalize();
+    heading = vec_to_goal.normalized();
 
 };
 
