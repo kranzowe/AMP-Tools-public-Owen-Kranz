@@ -111,13 +111,9 @@ int main(int argc, char** argv) {
     test_obs = {test_ob, test_ob3};
     test_agent.x = Eigen::Vector2d(0.0 - test_eps/3.0, 5.0 + test_eps/3.0);
     converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "converge fails: " << converged << std::endl;
-    converged = test_agent.rotateToCircumnavigateRHInteriorCorner(test_obs, test_dtheta, test_eps);
     std::cout << "converge?" << converged <<"heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
     test_agent.x = Eigen::Vector2d(2.0 + test_eps/3.0, 5.0 + test_eps/3.0);
     converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "converge fails: " << converged << std::endl;
-    converged = test_agent.rotateToCircumnavigateRHInteriorCorner(test_obs, test_dtheta, test_eps);
     std::cout << "converge?" << converged <<"heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
 
 
@@ -169,9 +165,9 @@ int main(int argc, char** argv) {
     */
 
     // Declare your algorithm object 
-    const double dt = 0.01;
-    const double epsilon = 1e-4;
-    const double dtheta = 1e-3;
+    const double dt = 1e-3;
+    const double epsilon = 0.01;
+    const double dtheta = 0.5;
     MyBugAlgorithm algo(dt, dtheta, epsilon); 
     
     {
@@ -206,7 +202,7 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw2_figs");
 
 
-    HW2::grade(algo, "nonhuman.biologic@myspace.edu", argc, argv);
+    HW2::grade(algo, "owen.kranz@coloradu.edu", argc, argv);
     
     /* If you want to reconstruct your bug algorithm object every trial (to reset member variables from scratch or initialize), use this method instead*/
     //HW2::grade<MyBugAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);

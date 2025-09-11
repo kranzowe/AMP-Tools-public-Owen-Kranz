@@ -28,7 +28,7 @@ bool PointAgent::move(const std::vector<MyObstacle> obstacles, const double dt, 
         //move eps/3 closer each time just until you make contact
         while (true){
             bool contact = false;
-            x_next += heading*(epsilon/3.0);
+            x_next += heading*(epsilon/100.0);
             for (const auto& ob : obstacles){
                 if (ob.collisionCheck(x_next)){
                     contact = true;
@@ -61,184 +61,101 @@ void PointAgent::rotate(double dtheta){
 bool PointAgent::rotateToCircumnavigateRH(const std::vector<MyObstacle> obstacles, const double dtheta, const double epsilon){
     /* rotates withe the following schema.
 
-    if heading*epsilon is in collision and -heading*epsilon is not:
-        rotate dtheta
-    if -heading*epsilon is in collision and heading*epsilon is not:
-        rotate -dtheta
-    if -heading*epsilon is not collision and heading*epsilon is also not
-        and right_hand * epsilon not in collision
+    draw a circle of radius epsilon going CW from heading
+    with dtheta as the step
 
-        flip heading
-    once headings are free and rh is not, break and can move
+    compute which of these are in collision and which arent. 
+
+    searching CW, choose the heading that is free when the next one isn't
     */
 
-    double total_rotation = 0.0;
+    const int num_vecs = static_cast<int>(360.0 / dtheta) + 1;
+    const int num_points_on_vec = 20;
+    std::vector<std::vector<bool>> collision_flags(num_vecs, std::vector<bool>(num_points_on_vec, false));
+    Eigen::Vector2d base_heading = heading; // set so we can have something to rotate
+    double ray_length = 2*epsilon;
 
-    while (total_rotation < 1000){ // gives it 1000 degrees to converge lol
-        bool heading_free = true;
-        bool backheading_free = true;
-        bool rh_free = true;
-        bool lh_free = true;
+    bool no_collision = true;
 
-        for (const auto& ob : obstacles){
-            Eigen::Vector2d heading_vec = x + epsilon*heading;
-            Eigen::Vector2d backheading_vec = x - epsilon*heading;
-            Eigen::Vector2d rh_vec = x + epsilon * Eigen::Vector2d(heading[1], -heading[0]);
-            Eigen::Vector2d lh_vec = x + epsilon * Eigen::Vector2d(-heading[1], heading[0]);
-            
-            if (ob.collisionCheck(heading_vec)){
-                heading_free = false;
-            };
-            if (ob.collisionCheck(backheading_vec)){
-                backheading_free = false;
-            };
-            if (ob.collisionCheck(rh_vec)){
-                rh_free = false;
-            };
-            if (ob.collisionCheck(lh_vec)){
-                lh_free = false;
-            };
-        };
+    // rotate base heading by dtheta each time and check for collisions
 
-        int num_free = heading_free + backheading_free + rh_free + lh_free;
-        // check for interior corner
-        if (num_free == 1){
-            return false;
-        }
+    for (int i = 0; i < num_vecs; ++i) {
         
-        //Check our exit condition.
-        if (heading_free && backheading_free && lh_free && !rh_free){
-            return true;
-        }
-
+        double theta = i*-dtheta;
+        //define the dtheta rotation matrix
+        Eigen::Matrix2d rot_mat;
+        rot_mat << cos(theta * M_PI/180.0), -sin(theta * M_PI/180.0),
+                sin(theta * M_PI/180.0), cos(theta * M_PI/180.0);
         
-        if (num_free == 0){
-            std::cout << "All vectors are not free. Inside obstacle" << std::endl;
+        Eigen::Vector2d new_heading = rot_mat * base_heading;
+        
+        for (int j = 0; j < num_points_on_vec; ++j) {
+
+            double frac = static_cast<double>(j) / (num_points_on_vec - 1);
+            Eigen::Vector2d sample_point = x + (frac * ray_length) * new_heading;
+
+            //check collision for this direction
+            for (const auto& ob : obstacles) {
+                if (ob.collisionCheck(sample_point)) {
+                    collision_flags[i][j] = true;
+                    if (no_collision) {
+                        no_collision = false;
+                    }
+
+                    break;
+                }
+            }
         }
+    }
+    if (no_collision){ // if we found no collision :/
+        std::cout << "NO COLLISION :( \n";
+        return false;
+    }
+    double closest_distance;
+    double theta_collision;
+    // this loops searchs outwards, finding the first distance that results in collision. 
+    // thats our distance to obstacle
 
-        // std::cout << heading_free << " " << backheading_free << " " << rh_free << total_rotation << std::endl;
+    bool done = false;
+    for (int j = 0; j < num_points_on_vec && !done; ++j) {
+        for (int i = 0; i < num_vecs - 1; ++i) {
 
-        //Conditions when two are not free, gotta move by dtheta
-        // goal is to move to the closest solution where only one arm is in. 
-        // this is tricky to determine 'closest' so we just rotate dtheta
-        else if (num_free == 2){
-            rotate(dtheta);
-            total_rotation += dtheta;
+            if (collision_flags[i][j]) {
+                // this is the closest distance that found collision
+                closest_distance = (num_points_on_vec / j)*ray_length;
+                done = true;
+                break; // double break??
+            }
         }
+    }
+    
+    // this loops searches for the vector, that at its longest point, collides
+    // thats our theta to collision
+    for (int i = 0; i < num_vecs - 1; ++i) {
+        if (collision_flags[i][num_points_on_vec-1]) { 
 
-        // CORNER CONDITIONS or conditions where only one is free (can solve more easily)
-        // special cases where only one arm is free, or all are free
-        else if (num_free == 4){
-            // this is the gross corner condition. we are gonna rotate 45, and evaluate which arm is in the corner
-            rotate(45.0);
-            total_rotation += 45;
+            theta_collision = i*-dtheta;
+
+            break;
         }
-        // if num_free = 1, solve for exact rotation to go right way
-        else if (heading_free && backheading_free && rh_free && !lh_free){
-            // only left hand is in corner, flip
-            rotate(180);
-            total_rotation += 180;
-        }
-        else if (!heading_free && backheading_free && rh_free && lh_free){
-            // only heading is in corner, rot 90
-            rotate(90);
-            total_rotation += 90;
-        }
-        else if (heading_free && !backheading_free && rh_free && lh_free){
-            // only backheading is in corner, rot -90
-            rotate(-90);
-            total_rotation += 90;
-        }
-    };
+    }
 
-    std::cout << "ROTATE TO CIRCUMNAV DID NOT CONVERGE " << std::endl;
-    return 0;
-
-};
-
-
-bool PointAgent::rotateToCircumnavigateRHInteriorCorner(const std::vector<MyObstacle> obstacles, const double dtheta, const double epsilon){
-    /* rotates withe the following schema.
-
-    if heading*epsilon is in collision and -heading*epsilon is not:
-        rotate dtheta
-    if -heading*epsilon is in collision and heading*epsilon is not:
-        rotate -dtheta
-    if -heading*epsilon is not collision and heading*epsilon is also not
-        and right_hand * epsilon not in collision
-
-        flip heading
-    once headings are free and rh is not, break and can move
-    */
-
-    double total_rotation = 0.0;
-
-    while (total_rotation < 1000){ // gives it 1000 degrees to converge lol
-        bool heading_free = true;
-        bool backheading_free = true;
-        bool rh_free = true;
-        bool lh_free = true;
-
-        for (const auto& ob : obstacles){
-            Eigen::Vector2d heading_vec = x + epsilon*heading;
-            Eigen::Vector2d backheading_vec = x - epsilon*heading;
-            Eigen::Vector2d rh_vec = x + epsilon * Eigen::Vector2d(heading[1], -heading[0]);
-            Eigen::Vector2d lh_vec = x + epsilon * Eigen::Vector2d(-heading[1], heading[0]);
-            
-            if (ob.collisionCheck(heading_vec)){
-                heading_free = false;
-            };
-            if (ob.collisionCheck(backheading_vec)){
-                backheading_free = false;
-            };
-            if (ob.collisionCheck(rh_vec)){
-                rh_free = false;
-            };
-            if (ob.collisionCheck(lh_vec)){
-                lh_free = false;
-            };
-        };
-
-        int num_free = heading_free + backheading_free + rh_free + lh_free;
-
-
-        //Check our exit condition.
-        //for interior, only need two free
-        if (heading_free && !rh_free){
-            return 1;
-        }
-
-        if (num_free == 0){
-            std::cout << "All vectors are not free. Inside obstacle" << std::endl;
-        }
-
-        // std::cout << heading_free << " " << backheading_free << " " << rh_free << total_rotation << std::endl;
-
-        //Conditions when 1 is free, rotate until just 2 are free
-        else if (num_free == 1){
-            rotate(dtheta);
-            total_rotation += dtheta;
-        }
-        // if num_free = 2, solve for exact rotation to go right way
-        else if (!heading_free && backheading_free && !rh_free && lh_free){
-            // only left hand is in corner, flip
-            rotate(90);
-            total_rotation += 90;
-        }
-        else if (!heading_free && backheading_free && rh_free && !lh_free){
-            // only heading is in corner, rot 90
-            rotate(180);
-            total_rotation += 180;
-        }
-        else if (heading_free && !backheading_free && rh_free && !lh_free){
-            // only backheading is in corner, rot -90
-            rotate(-90);
-            total_rotation += 90;
-        }
-    };
-
-    std::cout << "ROTATE TO CIRCUMNAV interior DID NOT CONVERGE " << std::endl;
-    return 0;
+    // now, compute how much to rotate. 
+    // we want to move proportionally towards the theta collision
+    // we want to move with respect to the derivative of the closest distance
+    double kp = 0.1;
+    double kd = -0.1;
+    double drotation;
+    if (previous_dist == -1){
+        drotation = kp * theta_collision;
+        previous_dist = closest_distance;
+    }else{
+        drotation = (kp * theta_collision) + (kd*(closest_distance - previous_dist));
+        previous_dist = closest_distance;
+    }
+    
+    rotate(drotation);
+    return true;
 };
 
 void PointAgent::pointAtGoal(const Eigen::Vector2d q_goal){
