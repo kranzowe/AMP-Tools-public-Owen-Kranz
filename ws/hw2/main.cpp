@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
 
     // Visualizer::saveFigures(true, "hw2_figs");
 
-    HW2::grade(algo, "owen.kranz@coloradu.edu", argc, argv);
+    //HW2::grade(algo, "owen.kranz@coloradu.edu", argc, argv);
     HW2::grade(algo2, "owen.kranz@coloradu.edu", argc, argv);
     
     /* If you want to reconstruct your bug algorithm object every trial (to reset member variables from scratch or initialize), use this method instead*/
