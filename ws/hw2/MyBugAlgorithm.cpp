@@ -35,7 +35,7 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
     
     path.waypoints.push_back(agent.x);
 
-    while (j < 6e5){
+    while (j < 16e5){
         
         // at start, evaluate if we hit goal! if not pushback and continue
         if ((problem.q_goal - agent.x).norm() < epsilon) {

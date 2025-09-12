@@ -169,23 +169,24 @@ int main(int argc, char** argv) {
     const double epsilon = 0.001;
     const double dt = 0.0005;
     const double dtheta = 2.0;
-    MyBug2 algo(dt, dtheta, epsilon); 
+    MyBugAlgorithm algo(dt, dtheta, epsilon); 
+    MyBug2 algo2(dt, dtheta, epsilon); 
     
-    {
-        // Call your algorithm on the problem
+    // {
+    //     // Call your algorithm on the problem
 
-        // DEFINE HYPER PARAMETERS
-        amp::Path2D path = algo.plan(problem);
+    //     // DEFINE HYPER PARAMETERS
+    //     amp::Path2D path = algo.plan(problem);
 
-        // Check your path to make sure that it does not collide with the environment 
-        bool success = HW2::check(path, problem);
+    //     // Check your path to make sure that it does not collide with the environment 
+    //     bool success = HW2::check(path, problem);
 
-        LOG("Found valid solution to workspace 1: " << (success ? "Yes!" : "No :("));
-        LOG("path length: " << path.length());
+    //     LOG("Found valid solution to workspace 1: " << (success ? "Yes!" : "No :("));
+    //     LOG("path length: " << path.length());
 
-        // Visualize the path and environment
-        Visualizer::makeFigure(problem, path);
-    }
+    //     // Visualize the path and environment
+    //     Visualizer::makeFigure(problem, path);
+    // }
 
     // Let's get crazy and generate a random environment and test your algorithm
     {
@@ -209,10 +210,10 @@ int main(int argc, char** argv) {
     // }
     }
 
-    Visualizer::saveFigures(true, "hw2_figs");
-
+    // Visualizer::saveFigures(true, "hw2_figs");
 
     HW2::grade(algo, "owen.kranz@coloradu.edu", argc, argv);
+    HW2::grade(algo2, "owen.kranz@coloradu.edu", argc, argv);
     
     /* If you want to reconstruct your bug algorithm object every trial (to reset member variables from scratch or initialize), use this method instead*/
     //HW2::grade<MyBugAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);
