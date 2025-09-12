@@ -1,8 +1,23 @@
-#include "MyBugAlgorithm.h"
+#include "MyBug2.h"
 #include "MyObstacle.h"
 #include "MyAgent.h"
 
-amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
+double MyBug2::DistanceToMLine(Eigen::Vector2d q_start, Eigen::Vector2d q_end, Eigen::Vector2d q){
+    // a = (y2-y1)
+    // b = -(x2-x1)
+    // c = x2*y1 - x1*y2
+
+    double a = q_end[1] - q_start[1];
+    double b = -(q_end[0] - q_start[0]);
+    double c = (q_end[0]*q_start[1]) - (q_start[0]*q_end[1]);
+    
+    // so by my convention, all points to the left of the vector 
+    // point a to point b are negative. therefore I define polygons cCW using vertices
+    return abs(a*q[0] + b*q[1] + c)/sqrt((a*a) + (b*b));
+}
+
+
+amp::Path2D MyBug2::plan(const amp::Problem2D& problem) {
 
     // Your algorithm solves the problem and generates a path. Here is a hard-coded to path for now...
     
@@ -27,7 +42,7 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
     int qh_i_index = -1; //will save the index of the point on the path at qhi
     int ql_i_index = -1; //ditto but for qli
     bool collided = false; // lets us know if we are in obstacle logic or not
-    double min_dist;
+    double dist_qh;
 
     Eigen::Vector2d last_position = agent.x;
     int stuck_points = 0;
@@ -35,7 +50,7 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
     
     path.waypoints.push_back(agent.x);
 
-    while (j < 6e5){
+    while (j < 16e5){
         
         // at start, evaluate if we hit goal! if not pushback and continue
         if ((problem.q_goal - agent.x).norm() < epsilon) {
@@ -59,7 +74,7 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
             bool converged;
             if (qh_i_index == -1){ //define qhi for the first time
                 qh_i_index = path.waypoints.size() - 1;
-                min_dist = (problem.q_goal - path.waypoints[qh_i_index]).norm();
+                dist_qh = (problem.q_goal - path.waypoints[qh_i_index]).norm();
             }
 
             converged = agent.rotateToCircumnavigateRH(my_obstacles, dtheta, epsilon);
@@ -70,48 +85,25 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
             if (circumnav_collided){
                 agent.heading *=-1;
             }
+
+            // detect if we made it back to m_line
+            double dist_mline = DistanceToMLine(problem.q_init, problem.q_goal, agent.x);
+            double dist_togoal = (problem.q_goal - agent.x).norm();
+
+            PointAgent test_agent = agent; // copies agent to check if path to goal is blocked
+            test_agent.pointAtGoal(problem.q_goal);
+            bool collision_test = test_agent.move(my_obstacles, dt, epsilon);
             
-            //set qli if new minimum found
-            if ((problem.q_goal - agent.x).norm() <= min_dist) {
-                ql_i_index = path.waypoints.size(); // no minus 1 here because we havent pushed that point yet
-                min_dist = (problem.q_goal - agent.x).norm();
-            }
-
-            // detect if we made it back to qhi
-            if ((path.waypoints[qh_i_index] - agent.x).norm() <= 3*epsilon &&
-                path.waypoints.size() >= qh_i_index + 200) { //this is a guard to make sure we have moved far enough past it
-                //looks like we made it back
-                //compute which path is shortest to qli
-                // option 1 is taking qhi to qli again.
-                // option 2 is reversing and going x to qli
-                
-                //my robot moves pretty linearly, so we are gonna assume the
-                // fewer points between the two is the shortest path
-                if ((j - ql_i_index) < (ql_i_index - qh_i_index)){
-                    //option 2 is shorter
-
-                    // N.B. I needed some AI help to figure out how to reverse
-                    std::vector<Eigen::Vector2d> temp(
-                        path.waypoints.begin() + ql_i_index,
-                        path.waypoints.end()
-                    );
-                    std::reverse(temp.begin(), temp.end()); // gotta flip to turn around
-                    path.waypoints.insert(path.waypoints.end(), temp.begin(), temp.end());
-                } else {
-                    // option 1 is shorter
-
-                    path.waypoints.insert(
-                        path.waypoints.end(),
-                        path.waypoints.begin() + qh_i_index,
-                        path.waypoints.begin() + ql_i_index);
-                }
-                agent.x = path.waypoints[ql_i_index];
+            if (dist_mline <= 3*epsilon && 
+                path.waypoints.size() >= qh_i_index + 200 &&
+                dist_togoal < dist_qh &&
+                !collision_test) {
+               
                 agent.pointAtGoal(problem.q_goal);
                 collided = false;
                 agent.previous_dist = -1;
 
                 qh_i_index = -1; //set back to sentinel value
-                ql_i_index = -1;
 
             }
         }

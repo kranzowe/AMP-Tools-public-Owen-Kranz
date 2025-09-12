@@ -6,6 +6,7 @@
 
 // Include any custom headers you created in your workspace
 #include "MyBugAlgorithm.h"
+#include "MyBug2.h"
 #include "Primative.h"
 #include "MyObstacle.h"
 #include "MyAgent.h"
@@ -145,12 +146,12 @@ int main(int argc, char** argv) {
     /*    Randomly generate the problem     */ 
 
     // Use WO1 from Exercise 2
-    Problem2D problem = HW2::getWorkspace1();
+    //Problem2D problem = HW2::getWorkspace1();
 
     // Use WO1 from Exercise 2
-    /*
+
     Problem2D problem = HW2::getWorkspace2();
-    */
+
 
     // Make a random environment spec, edit properties about it such as the number of obstacles
     /*
@@ -168,7 +169,7 @@ int main(int argc, char** argv) {
     const double epsilon = 0.001;
     const double dt = 0.0005;
     const double dtheta = 2.0;
-    MyBugAlgorithm algo(dt, dtheta, epsilon); 
+    MyBug2 algo(dt, dtheta, epsilon); 
     
     {
         // Call your algorithm on the problem
@@ -180,6 +181,7 @@ int main(int argc, char** argv) {
         bool success = HW2::check(path, problem);
 
         LOG("Found valid solution to workspace 1: " << (success ? "Yes!" : "No :("));
+        LOG("path length: " << path.length());
 
         // Visualize the path and environment
         Visualizer::makeFigure(problem, path);
@@ -187,24 +189,24 @@ int main(int argc, char** argv) {
 
     // Let's get crazy and generate a random environment and test your algorithm
     {
-    int trial = 1;
-    while (true) {
-        amp::Path2D path; // Make empty path, problem, and collision points, as they will be created by generateAndCheck()
-        amp::Problem2D random_prob; 
-        std::vector<Eigen::Vector2d> collision_points;
-        bool random_trial_success = HW2::generateAndCheck(algo, path, random_prob, collision_points);
-        LOG("Random trial #" << trial << " - Found valid solution in random environment: " << (random_trial_success ? "Yes!" : "No :("));
-        LOG("path length: " << path.length());
+    // int trial = 1;
+    // while (true) {
+    //     amp::Path2D path; // Make empty path, problem, and collision points, as they will be created by generateAndCheck()
+    //     amp::Problem2D random_prob; 
+    //     std::vector<Eigen::Vector2d> collision_points;
+    //     bool random_trial_success = HW2::generateAndCheck(algo, path, random_prob, collision_points);
+    //     LOG("Random trial #" << trial << " - Found valid solution in random environment: " << (random_trial_success ? "Yes!" : "No :("));
+    //     LOG("path length: " << path.length());
 
-        // Visualize the path environment, and any collision points with obstacles
+    //     // Visualize the path environment, and any collision points with obstacles
         
-        if (!random_trial_success) {
-            Visualizer::makeFigure(random_prob, path, collision_points);
-            LOG("Stopping loop: random trial failed.");
-            break;
-        }
-        ++trial;
-    }
+    //     if (!random_trial_success) {
+    //         Visualizer::makeFigure(random_prob, path, collision_points);
+    //         LOG("Stopping loop: random trial failed.");
+    //         break;
+    //     }
+    //     ++trial;
+    // }
     }
 
     Visualizer::saveFigures(true, "hw2_figs");
