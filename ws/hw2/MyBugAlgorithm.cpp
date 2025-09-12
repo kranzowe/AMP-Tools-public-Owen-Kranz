@@ -35,7 +35,7 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
     
     path.waypoints.push_back(agent.x);
 
-    while (j < 1e4){
+    while (j < 3e5){
         
         // at start, evaluate if we hit goal! if not pushback and continue
         if ((problem.q_goal - agent.x).norm() < epsilon) {
@@ -49,13 +49,17 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
             agent.pointAtGoal(problem.q_goal);
             collided = agent.move(my_obstacles, dt, epsilon);
             //no need to push back useless points
+            if (collided){
+                agent.rotate(90); // this is because the controller wont update
+                                // if the heading is right at the target. so niavely rotate 90 right
+            }
         } 
         else {// uh oh! we smacked an object!!!
             path.waypoints.push_back(agent.x); // push all collided points
             bool converged;
-            agent.heading *= -1; // explain this todo
             if (qh_i_index == -1){ //define qhi for the first time
                 qh_i_index = path.waypoints.size() - 1;
+                std::cout << "qhi " << path.waypoints[qh_i_index][0] <<", "<< path.waypoints[qh_i_index][1] <<"\n";
                 min_dist = (problem.q_goal - path.waypoints[qh_i_index]).norm();
             }
 
@@ -63,7 +67,11 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
             if (!converged){
                 return path;
             }
-            (void)agent.move(my_obstacles, dt, epsilon);
+            bool circumnav_collided = agent.move(my_obstacles, dt, epsilon);
+            if (circumnav_collided){
+                std::cout <<"smol collide"<<"\n";
+                agent.heading *=-1;
+            }
             
             //set qli if new minimum found
             if ((problem.q_goal - agent.x).norm() <= min_dist) {
@@ -73,9 +81,8 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
 
             // detect if we made it back to qhi
             if ((path.waypoints[qh_i_index] - agent.x).norm() <= 3*epsilon &&
-                path.waypoints.size() >= qh_i_index + 20) { //this is a guard to make sure we have moved far enough past it
+                path.waypoints.size() >= qh_i_index + 200) { //this is a guard to make sure we have moved far enough past it
                 //looks like we made it back
-                std::cout << "successful circumnavigation \n";
                 //compute which path is shortest to qli
                 // option 1 is taking qhi to qli again.
                 // option 2 is reversing and going x to qli
@@ -84,6 +91,8 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
                 // fewer points between the two is the shortest path
                 if ((j - ql_i_index) < (ql_i_index - qh_i_index)){
                     //option 2 is shorter
+                    std::cout << "opt 2: " << qh_i_index << " "<< ql_i_index << " " << path.waypoints.size()<< "\n";
+
                     // N.B. I needed some AI help to figure out how to reverse
                     std::vector<Eigen::Vector2d> temp(
                         path.waypoints.begin() + ql_i_index,
@@ -93,6 +102,8 @@ amp::Path2D MyBugAlgorithm::plan(const amp::Problem2D& problem) {
                     path.waypoints.insert(path.waypoints.end(), temp.begin(), temp.end());
                 } else {
                     // option 1 is shorter
+                    std::cout << "opt 1: " << qh_i_index << " "<< ql_i_index << " " << path.waypoints.size()<< "\n";
+
                     path.waypoints.insert(
                         path.waypoints.end(),
                         path.waypoints.begin() + qh_i_index,

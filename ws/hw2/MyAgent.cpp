@@ -28,7 +28,7 @@ bool PointAgent::move(const std::vector<MyObstacle> obstacles, const double dt, 
         //move eps/3 closer each time just until you make contact
         while (true){
             bool contact = false;
-            x_next += heading*(epsilon/100.0);
+            x_next += heading*(epsilon/2.0);
             for (const auto& ob : obstacles){
                 if (ob.collisionCheck(x_next)){
                     contact = true;
@@ -70,7 +70,7 @@ bool PointAgent::rotateToCircumnavigateRH(const std::vector<MyObstacle> obstacle
     */
 
     const int num_vecs = static_cast<int>(360.0 / dtheta) + 1;
-    const int num_points_on_vec = 20;
+    const int num_points_on_vec = 10;
     std::vector<std::vector<bool>> collision_flags(num_vecs, std::vector<bool>(num_points_on_vec, false));
     Eigen::Vector2d base_heading = heading; // set so we can have something to rotate
     double ray_length = 2*epsilon;
@@ -122,7 +122,8 @@ bool PointAgent::rotateToCircumnavigateRH(const std::vector<MyObstacle> obstacle
 
             if (collision_flags[i][j]) {
                 // this is the closest distance that found collision
-                closest_distance = (num_points_on_vec / j)*ray_length;
+                double frac = static_cast<double>(j) / (num_points_on_vec - 1);
+                closest_distance = frac * ray_length;
                 done = true;
                 break; // double break??
             }
@@ -143,14 +144,15 @@ bool PointAgent::rotateToCircumnavigateRH(const std::vector<MyObstacle> obstacle
     // now, compute how much to rotate. 
     // we want to move proportionally towards the theta collision
     // we want to move with respect to the derivative of the closest distance
-    double kp = 0.1;
-    double kd = -0.1;
+    double kp_theta = 0.2;
+    double kp_dist = -20000.00;
+    double kd_dist = -10000.00;
     double drotation;
     if (previous_dist == -1){
-        drotation = kp * theta_collision;
+        drotation = kp_theta * theta_collision;
         previous_dist = closest_distance;
     }else{
-        drotation = (kp * theta_collision) + (kd*(closest_distance - previous_dist));
+        drotation = (kp_theta * theta_collision) + (kp_dist*(closest_distance - epsilon)) + kd_dist*(closest_distance - previous_dist);
         previous_dist = closest_distance;
     }
     

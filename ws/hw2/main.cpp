@@ -86,16 +86,16 @@ int main(int argc, char** argv) {
     // gonna use that old test_ob which is a 2d square
     std::vector test_obs = {test_ob};
     double test_eps = 1e-4;
-    double test_dtheta = 1e-5;
-    test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, -5.0 - test_eps/3.0);
-    bool converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "converge?" << converged <<"heading should close to -0.707, 0.707: " << test_agent.heading.transpose() << std::endl;
-    test_agent.x = Eigen::Vector2d(0, 5.0 + test_eps/3.0);
-    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout <<"converge? " << converged <<" heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
-    test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, 1.0);
-    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout <<"converge? " << converged <<" heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
+    // double test_dtheta = 1e-5;
+    // test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, -5.0 - test_eps/3.0);
+    // bool converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    // std::cout << "converge?" << converged <<"heading should close to -0.707, 0.707: " << test_agent.heading.transpose() << std::endl;
+    // test_agent.x = Eigen::Vector2d(0, 5.0 + test_eps/3.0);
+    // converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    // std::cout <<"converge? " << converged <<" heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
+    // test_agent.x = Eigen::Vector2d(-5.0 - test_eps/3.0, 1.0);
+    // converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    // std::cout <<"converge? " << converged <<" heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
 
     // now gonna add an object to make it convex :o. 
 
@@ -105,16 +105,16 @@ int main(int argc, char** argv) {
         Eigen::Vector2d(0.0, 6.0),
         Eigen::Vector2d(0.0, 5.0),
     };
-    MyObstacle test_ob3;
-    test_ob3.defineWithPoints(vertices2);
+    // MyObstacle test_ob3;
+    // test_ob3.defineWithPoints(vertices2);
 
-    test_obs = {test_ob, test_ob3};
-    test_agent.x = Eigen::Vector2d(0.0 - test_eps/3.0, 5.0 + test_eps/3.0);
-    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "converge?" << converged <<"heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
-    test_agent.x = Eigen::Vector2d(2.0 + test_eps/3.0, 5.0 + test_eps/3.0);
-    converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
-    std::cout << "converge?" << converged <<"heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
+    // test_obs = {test_ob, test_ob3};
+    // test_agent.x = Eigen::Vector2d(0.0 - test_eps/3.0, 5.0 + test_eps/3.0);
+    // converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    // std::cout << "converge?" << converged <<"heading should close to 0.0, 1.0: " << test_agent.heading.transpose() << std::endl;
+    // test_agent.x = Eigen::Vector2d(2.0 + test_eps/3.0, 5.0 + test_eps/3.0);
+    // converged = test_agent.rotateToCircumnavigateRH(test_obs, test_dtheta, test_eps);
+    // std::cout << "converge?" << converged <<"heading should close to 1.0, 0.0: " << test_agent.heading.transpose() << std::endl;
 
 
     // tests moving puts you just outside an object
@@ -165,9 +165,9 @@ int main(int argc, char** argv) {
     */
 
     // Declare your algorithm object 
-    const double dt = 1e-3;
-    const double epsilon = 0.01;
-    const double dtheta = 0.5;
+    const double epsilon = 0.001;
+    const double dt = 0.0005;
+    const double dtheta = 2.0;
     MyBugAlgorithm algo(dt, dtheta, epsilon); 
     
     {
@@ -187,16 +187,24 @@ int main(int argc, char** argv) {
 
     // Let's get crazy and generate a random environment and test your algorithm
     {
+    int trial = 1;
+    while (true) {
         amp::Path2D path; // Make empty path, problem, and collision points, as they will be created by generateAndCheck()
         amp::Problem2D random_prob; 
         std::vector<Eigen::Vector2d> collision_points;
         bool random_trial_success = HW2::generateAndCheck(algo, path, random_prob, collision_points);
-        LOG("Found valid solution in random environment: " << (random_trial_success ? "Yes!" : "No :("));
-
+        LOG("Random trial #" << trial << " - Found valid solution in random environment: " << (random_trial_success ? "Yes!" : "No :("));
         LOG("path length: " << path.length());
 
         // Visualize the path environment, and any collision points with obstacles
-        Visualizer::makeFigure(random_prob, path, collision_points);
+        
+        if (!random_trial_success) {
+            Visualizer::makeFigure(random_prob, path, collision_points);
+            LOG("Stopping loop: random trial failed.");
+            break;
+        }
+        ++trial;
+    }
     }
 
     Visualizer::saveFigures(true, "hw2_figs");
