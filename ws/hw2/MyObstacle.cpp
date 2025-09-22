@@ -15,6 +15,26 @@ bool MyObstacle::collisionCheck(Eigen::Vector2d q) const {
     return true;
 }
 
+bool MyObstacle::collisionCheckAlongLine(Eigen::Vector2d q_start, Eigen::Vector2d q_end) const {
+
+    double gamma = 0.0;
+    double delta_gamma = 0.01;
+    while gamma <= 1.0{
+
+        Eigen::Vector2d q_new = gamma*q_start + (1.0-gamma) * q_end;
+        bool collided = collisionCheck(q_new);
+
+        if (collided){
+            return true;
+        }
+
+    }
+
+    // all points pass
+    return false;
+}
+
+
 void MyObstacle::defineWithPoints(const std::vector<Eigen::Vector2d>& vertices) {
     /* this method loops through a set of CCW vertices and defines primatives and
     stores them in the primative vector. GPT helped me with syntax here cuz c++ loops r hard
