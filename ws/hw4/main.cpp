@@ -387,14 +387,14 @@ int main(int argc, char** argv) {
 
     MyManipulatorCSConstructor cspace_constructor(n_cells);
 
-    // MyManipulator2D manipulator_prob_3({1.0, 1.0});
+    MyManipulator2D manipulator_prob_3({1.0, 1.0});
     // test_manipulator(manipulator_prob_3);
    
-    // std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator_prob_3, HW4::getEx3Workspace1());
+    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator_prob_3, HW4::getEx3Workspace3());
+    Visualizer::makeFigure(HW4::getEx3Workspace3());
+    Visualizer::makeFigure(*cspace);
     
-    // Visualizer::makeFigure(*cspace);
-    
-    // Visualizer::saveFigures(true, "hw4_figs");
+    Visualizer::saveFigures(true, "hw4_figs");
     
     amp::HW4::grade<MyManipulator2D>(cspace_constructor, "owen.kranz@colorado.edu", argc, argv);
     
