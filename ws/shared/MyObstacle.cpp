@@ -28,6 +28,15 @@ bool MyObstacle::collisionCheckAlongLine(Eigen::Vector2d q_start, Eigen::Vector2
 
     }
 
+    // gotta make sure we get the end
+    if (collisionCheck(q_end)){
+        return true;
+        }
+
+    if (collisionCheck(q_start)){
+        return true;
+        }
+
     // all points pass
     return false;
 }

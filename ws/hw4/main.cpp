@@ -30,7 +30,7 @@ void test_new_ob_func(){
     std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(-1.0, -0.5)) << std::endl;
     std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 0.9), Eigen::Vector2d(1.0, 0.9)) << std::endl;
     std::cout << "test collision should be FALSE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 1.1), Eigen::Vector2d(1.0, 1.1)) << std::endl;
-    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.01, 0.01), Eigen::Vector2d(-1.0, -0.5)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(-0.01, -0.01), Eigen::Vector2d(-1.0, -0.5)) << std::endl;
 
 
 }
@@ -278,7 +278,7 @@ int main(int argc, char** argv) {
 
     MyManipulatorCSConstructor cspace_constructor(n_cells);
    
-    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace1());
+    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace2());
     
     Visualizer::makeFigure(*cspace);
     
