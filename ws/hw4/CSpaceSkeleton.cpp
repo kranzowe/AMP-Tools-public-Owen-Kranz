@@ -1,13 +1,14 @@
 #include "CSpaceSkeleton.h"
 #include "MyObstacle.h"
+
 // Override this method for returning whether or not a point is in collision
 
 std::pair<std::size_t, std::size_t> MyGridCSpace2D::getCellFromPoint(double x0, double x1) const {
     // Implment your discretization procedure here, such that the point (x0, x1) lies within the returned cell
     double x0_min = m_x0_bounds.first; //gotta get a bunch o variaubles
     double x0_max = m_x0_bounds.second;
-    double x1_min = m_x0_bounds.first;
-    double x1_max = m_x0_bounds.second;
+    double x1_min = m_x1_bounds.first;
+    double x1_max = m_x1_bounds.second;
 
     auto grid_size = size();
     std::size_t x0_cells = grid_size.first;
@@ -35,7 +36,11 @@ std::pair<std::size_t, std::size_t> MyGridCSpace2D::getCellFromPoint(double x0, 
 std::unique_ptr<amp::GridCSpace2D> MyManipulatorCSConstructor::construct(const amp::LinkManipulator2D& manipulator, const amp::Environment2D& env) {
     // Create an object of my custom cspace type (e.g. MyGridCSpace2D) and store it in a unique pointer. 
     // Pass the constructor parameters to std::make_unique()
-    std::unique_ptr<MyGridCSpace2D> cspace_ptr = std::make_unique<MyGridCSpace2D>(m_cells_per_dim, m_cells_per_dim, env.x_min, env.x_max, env.y_min, env.y_max);
+    double x0_min = 0.0;
+    double x0_max = 2.0*M_PI;
+    double x1_min = 0.0;
+    double x1_max = 2.0*M_PI;
+    std::unique_ptr<MyGridCSpace2D> cspace_ptr = std::make_unique<MyGridCSpace2D>(m_cells_per_dim, m_cells_per_dim, x0_min, x0_max, x1_min, x1_max);
     // In order to use the pointer as a regular GridCSpace2D object, we can just create a reference
     MyGridCSpace2D& cspace = *cspace_ptr;
 
@@ -47,44 +52,52 @@ std::unique_ptr<amp::GridCSpace2D> MyManipulatorCSConstructor::construct(const a
         my_ob.defineWithPoints(obstacle.verticesCCW());
         my_obstacles.push_back(my_ob);
     };
-
-    double theta_1 = env.x_min;
     
-
-    double dtheta = 0.1;
-
-    while (theta_1 < env.x_max){
-
-        double theta_2 = env.y_min;
-
-        while (theta_2 < env.y_max){
+    double dtheta_0 = (x0_max - x0_min) / m_cells_per_dim;
+    double dtheta_1 = (x1_max - x1_min) / m_cells_per_dim;
+    for (double theta_0 = x0_min + (dtheta_0/2.0); theta_0 < x0_max; theta_0 += dtheta_0) {
+        for (double theta_1 = x1_min + (dtheta_1/2.0); theta_1 < x1_max; theta_1 += dtheta_1) {
             amp::ManipulatorState state;
-            state.resize(2);
+            state.resize(manipulator.nLinks());
 
+            state[0] = theta_0;
             state[1] = theta_1;
-            state[2] = theta_2;
+
+            bool collision = false;
             
-            for (uint32_t i = 0; i < manipulator.nLinks(); ++i) {
+            for (uint32_t i = 0; i < manipulator.nLinks()-1; ++i) {
 
-                points_to_check = 
+                Eigen::Vector2d joint_start = manipulator.getJointLocation(state, i);
+                Eigen::Vector2d joint_end = manipulator.getJointLocation(state, i + 1);
+                
 
-                Eigen::Vector2d joint_pos = manipulator.getJointLocation(ninety_state, i + 1);
-                std::cout << "Joint " << i + 1 << " position: [" << joint_pos[0] << ", " << joint_pos[1] << "]\n";
+
+                for (const auto& ob : my_obstacles){
+                    if (ob.collisionCheckAlongLine(joint_start, joint_end)){
+                        collision = true;
+                        break;
+                    }}
+                if (collision){
+                    break;
+                }
             }
+            if (collision){
+                auto cell_collided = cspace.getCellFromPoint(theta_0, theta_1);
+                cspace(cell_collided.first, cell_collided.second) = true;
 
-
-
+            }
+        
         }
-
     }
-    
-    cspace(1, 3) = true;
-    cspace(3, 3) = true;
-    cspace(0, 1) = true;
-    cspace(1, 0) = true;
-    cspace(2, 0) = true;
-    cspace(3, 0) = true;
-    cspace(4, 1) = true;
+
+
+    // cspace(1, 3) = true;
+    // cspace(3, 3) = true;
+    // cspace(0, 1) = true;
+    // cspace(1, 0) = true;
+    // cspace(2, 0) = true;
+    // cspace(3, 0) = true;
+    // cspace(4, 1) = true;
 
     // Returning the object of type std::unique_ptr<MyGridCSpace2D> can automatically cast it to a polymorphic base-class pointer of type std::unique_ptr<amp::GridCSpace2D>.
     // The reason why this works is not super important for our purposes, but if you are curious, look up polymorphism!

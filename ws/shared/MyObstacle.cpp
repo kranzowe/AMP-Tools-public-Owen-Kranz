@@ -17,14 +17,12 @@ bool MyObstacle::collisionCheck(Eigen::Vector2d q) const {
 
 bool MyObstacle::collisionCheckAlongLine(Eigen::Vector2d q_start, Eigen::Vector2d q_end) const {
 
-    double gamma = 0.0;
     double delta_gamma = 0.01;
-    while gamma <= 1.0{
+    for (double gamma = 0.0; gamma <=1.0; gamma += delta_gamma){
 
         Eigen::Vector2d q_new = gamma*q_start + (1.0-gamma) * q_end;
-        bool collided = collisionCheck(q_new);
 
-        if (collided){
+        if (collisionCheck(q_new)){
             return true;
         }
 

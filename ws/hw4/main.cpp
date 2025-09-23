@@ -7,13 +7,33 @@
 // Include the headers for HW4 code
 #include "CSpaceSkeleton.h"
 #include "ManipulatorSkeleton.h"
-
+#include "MyObstacle.h"
 // Include the header of the shared class
 #include "HelpfulClass.h"
 
 using namespace amp;
 
-//// some Testssss
+// some Tests
+
+void test_new_ob_func(){
+
+    // tests obstacle with vertice definition
+    std::vector<Eigen::Vector2d> vertices = {
+        Eigen::Vector2d(0.0, 0.0),
+        Eigen::Vector2d(1.0, 0.0),
+        Eigen::Vector2d(0.5, 1.0)
+    };
+    MyObstacle test_ob2;
+    test_ob2.defineWithPoints(vertices);
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 0.5), Eigen::Vector2d(1.0, 0.5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(1.0, 0.5), Eigen::Vector2d(0.0, 0.5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(-1.0, -0.5)) << std::endl;
+    std::cout << "test collision should be TRUE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 0.9), Eigen::Vector2d(1.0, 0.9)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.0, 1.1), Eigen::Vector2d(1.0, 1.1)) << std::endl;
+    std::cout << "test collision should be FALSE: " << test_ob2.collisionCheckAlongLine(Eigen::Vector2d(0.01, 0.01), Eigen::Vector2d(-1.0, -0.5)) << std::endl;
+
+
+}
 
 void test_manipulator(const MyManipulator2D& manipulator) {
 
@@ -181,6 +201,37 @@ void test_3linkmanipulator(const MyManipulator2D& manipulator) {
     std::cout << "\n=== End Kinematics Tests ===\n\n";
 }
 
+void problem2() {
+
+    MyManipulator2D manipulator3_a({0.5, 1.0, 0.5});
+
+    // forward kinematics with zero angles
+    amp::ManipulatorState a_state;
+    a_state.setZero(manipulator3_a.nLinks());
+    a_state[0] = M_PI / 6.0;
+    a_state[1] = M_PI / 3.0;
+    a_state[2] = (7.0 * M_PI) / 4.0;
+
+    Visualizer::makeFigure(manipulator3_a, a_state); 
+    
+
+
+    MyManipulator2D manipulator3_b({1.0, 0.5, 1.0});
+    Eigen::Vector2d targetb(2.0, 0.0);
+    amp::ManipulatorState b_state;
+    b_state.setZero(manipulator3_b.nLinks());
+
+    b_state = manipulator3_b.getConfigurationFromIK(targetb);
+    
+
+    Visualizer::makeFigure(manipulator3_b, b_state); 
+
+    Visualizer::saveFigures(true, "hw4_prob2_figs");
+
+    
+}
+
+
 void test_gridspace(const MyGridCSpace2D& GS) {
 
 
@@ -203,6 +254,8 @@ void test_gridspace(const MyGridCSpace2D& GS) {
 int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
+    problem2();
+    test_new_ob_func();
 
     MyManipulator2D manipulator({1.0, 2.0});
     test_manipulator(manipulator);
@@ -219,18 +272,12 @@ int main(int argc, char** argv) {
     MyGridCSpace2D grid(x0_cells, x1_cells, x0_min, x0_max, x1_min, x1_max);
 
     test_gridspace(grid);
-    std::cout<<"a";
-    std::size_t n_cells = 5;
-    std::cout<<"b"; 
+
+    std::size_t n_cells = 500;
+
 
     MyManipulatorCSConstructor cspace_constructor(n_cells);
-    // You can visualize your manipulator given an angle state like so:
-    amp::ManipulatorState test_state;
-    std::cout<<"c";
-    test_state.setZero(manipulator.nLinks());
-
-    Visualizer::makeFigure(manipulator, test_state); 
-
+   
     std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace1());
     
     Visualizer::makeFigure(*cspace);

@@ -2,6 +2,7 @@
 
 // This includes all of the necessary header files in the toolbox
 #include "AMPCore.h"
+#include "MyObstacle.h"
 
 // Include the correct homework header
 #include "hw/HW4.h"
