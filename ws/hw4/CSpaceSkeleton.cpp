@@ -65,7 +65,7 @@ std::unique_ptr<amp::GridCSpace2D> MyManipulatorCSConstructor::construct(const a
 
             bool collision = false;
             
-            for (uint32_t i = 0; i < manipulator.nLinks()-1; ++i) {
+            for (uint32_t i = 0; i <= manipulator.nLinks()-1; ++i) {
 
                 Eigen::Vector2d joint_start = manipulator.getJointLocation(state, i);
                 Eigen::Vector2d joint_end = manipulator.getJointLocation(state, i + 1);

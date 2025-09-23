@@ -8,12 +8,116 @@
 #include "CSpaceSkeleton.h"
 #include "ManipulatorSkeleton.h"
 #include "MyObstacle.h"
+
 // Include the header of the shared class
 #include "HelpfulClass.h"
 
 using namespace amp;
 
 // some Tests
+
+void problem_1b(){
+
+
+    std::vector<Eigen::Vector2d> ob_vertices = {
+        Eigen::Vector2d(0.0, 0.0),
+        Eigen::Vector2d(1.0, 2.0),
+        Eigen::Vector2d(0.0, 2.0),
+        Eigen::Vector2d(0.0, 0.0),
+    };
+    Polygon ob(ob_vertices);
+
+    std::vector<Polygon> all_c_polygons;
+    std::vector<double> heights;
+
+
+    for (double theta = 0.0; theta < (2.0*M_PI); theta += M_PI/6.0){
+        heights.push_back(theta);
+
+        std::vector<Eigen::Vector2d> robo_vertices; 
+        std::vector<Eigen::Vector2d> a; 
+        std::vector<Eigen::Vector2d> c_vertices; 
+        
+        Eigen::Matrix2d T;
+
+        T << std::cos(theta), -std::sin(theta),
+            std::sin(theta),   std::cos(theta);
+
+
+        for (const auto& point : ob_vertices){
+            robo_vertices.push_back(T*point);
+        }
+
+        for (const auto& point : robo_vertices){
+            a.push_back(-1.0*point);
+        }
+
+        // note, I forgot to sort -A to have the lowest y first, that really 
+        // messed things up!
+        // AI helped quite a lot with this rotation.
+        auto start_it = std::min_element(a.begin(), a.end(), 
+            [](const Eigen::Vector2d& p1, const Eigen::Vector2d& p2) {
+                if (std::abs(p1[1] - p2[1]) < 1e-9) {
+                    return p1[0] < p2[0];  // same y, choose leftmost
+                }
+                return p1[1] < p2[1];  // choose lowest y
+            });
+        
+        // rotates so the bottom-left point is first
+        std::rotate(a.begin(), start_it, a.end());
+        a.push_back(a[0]);
+
+        int a_index = 0;
+        int b_index = 0;
+
+        while (a_index < static_cast<int>(a.size()) && b_index < static_cast<int>(ob_vertices.size())){
+
+            c_vertices.push_back(a[a_index] + ob_vertices[b_index]);
+
+            std::cout<<"Point added: " << a[a_index] + ob_vertices[b_index] << "\n";
+
+            int a_next = (a_index + 1) % static_cast<int>(a.size());
+            int b_next = (b_index + 1) % static_cast<int>(ob_vertices.size());
+
+            double a_theta = atan2(a[a_next][1] - a[a_index][1], a[a_next][0] - a[a_index][0]);
+            double b_theta = atan2(ob_vertices[b_next][1] - ob_vertices[b_index][1], ob_vertices[b_next][0] - ob_vertices[b_index][0]);
+            
+            //AI helped with the next 9 lines
+            auto normalizeAngle = [](double angle) -> double {
+                angle = std::fmod(angle, 2.0 * M_PI);
+                if (angle < 0) angle += 2.0 * M_PI;
+                return angle;
+            };
+            
+            a_theta = normalizeAngle(a_theta);
+            b_theta = normalizeAngle(b_theta);
+            std::cout<<"a_theta: " << a_theta << "\n";
+            std::cout<<"b_theta: " << b_theta << "\n";
+            
+            if (b_theta < a_theta && std::abs(a_theta - b_theta) > 1e-9){
+                std::cout<<"b plus \n";
+                b_index +=1;
+            } else if (a_theta < b_theta && std::abs(a_theta - b_theta) > 1e-9){
+                std::cout<<"a plus \n";
+                a_index +=1;
+            } else {
+                std::cout<<"both plus \n";
+                a_index +=1;
+                b_index +=1;
+            }
+
+        }
+
+        all_c_polygons.push_back(Polygon(c_vertices));
+
+    }
+
+
+    Visualizer::makeFigure(all_c_polygons, heights);
+
+    Visualizer::saveFigures(true, "hw4_prob1_figs");
+
+}
 
 void test_new_ob_func(){
 
@@ -232,8 +336,16 @@ void problem2() {
 }
 
 
-void test_gridspace(const MyGridCSpace2D& GS) {
+void test_gridspace() {
 
+    std::size_t x0_cells = 100;
+    std::size_t x1_cells = 100;
+    double x0_min = 0.0;
+    double x0_max = 100.0;
+    double x1_min = 0.0;
+    double x1_max = 100.0;
+
+    MyGridCSpace2D GS(x0_cells, x1_cells, x0_min, x0_max, x1_min, x1_max);
 
     double x0 = 0.0;
     double x1 = 0.0;
@@ -247,6 +359,11 @@ void test_gridspace(const MyGridCSpace2D& GS) {
     double x1b = 55.5;
     auto cell3 = GS.getCellFromPoint(x0b, x1b);
     std::cout << "Cell: [" << cell3.first << ", " << cell3.second << "]\n";
+
+    double x0c = 55.5;
+    double x1c = 5.5;
+    auto cell4 = GS.getCellFromPoint(x0c, x1c);
+    std::cout << "Cell: [" << cell4.first << ", " << cell4.second << "]\n";
 }
 //// end test
 
@@ -254,37 +371,32 @@ void test_gridspace(const MyGridCSpace2D& GS) {
 int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
-    problem2();
-    test_new_ob_func();
+    // problem_1b();
+    // problem2();
+    // test_new_ob_func();
+    // test_gridspace();
 
-    MyManipulator2D manipulator({1.0, 2.0});
-    test_manipulator(manipulator);
+    // MyManipulator2D manipulator({1.0, 2.0});
+    // test_manipulator(manipulator);
 
-    MyManipulator2D manipulator3({8.0, 8.0, 9.0});
-    test_3linkmanipulator(manipulator3);
-    std::size_t x0_cells = 100;
-    std::size_t x1_cells = 100;
-    double x0_min = 0.0;
-    double x0_max = 100.0;
-    double x1_min = 0.0;
-    double x1_max = 100.0;
+    // MyManipulator2D manipulator3({8.0, 8.0, 9.0});
+    // test_3linkmanipulator(manipulator3);
+    
 
-    MyGridCSpace2D grid(x0_cells, x1_cells, x0_min, x0_max, x1_min, x1_max);
-
-    test_gridspace(grid);
-
-    std::size_t n_cells = 500;
-
+    std::size_t n_cells = 1000;
 
     MyManipulatorCSConstructor cspace_constructor(n_cells);
+
+    // MyManipulator2D manipulator_prob_3({1.0, 1.0});
+    // test_manipulator(manipulator_prob_3);
    
-    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace2());
+    // std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator_prob_3, HW4::getEx3Workspace1());
     
-    Visualizer::makeFigure(*cspace);
+    // Visualizer::makeFigure(*cspace);
     
-    Visualizer::saveFigures(true, "hw4_figs");
+    // Visualizer::saveFigures(true, "hw4_figs");
     
-    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "nonhuman.biologic@myspace.edu", argc, argv);
+    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "owen.kranz@colorado.edu", argc, argv);
     
     return 0;
 }
