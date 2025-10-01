@@ -65,6 +65,15 @@ std::pair<double, Eigen::Vector2d> MyObstacle::closestDistanceToq(Eigen::Vector2
     // using projection, but gotta check if it outside the segment (in which case itll be the start or
     // end point)
 
+    // chekc if in collision, return a large value
+
+    if (collisionCheck(q)){
+        Eigen::Vector2d point = q;
+        double dist = 0.0;
+        return {dist, point};
+    }
+
+
     double min_dist = INFINITY;
     Eigen::Vector2d global_closest_point;
 

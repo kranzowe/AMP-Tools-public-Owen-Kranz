@@ -44,6 +44,10 @@ class MyPotentialFunction : public amp::PotentialFunction2D {
 
 		virtual Eigen::Vector2d getGradient(const Eigen::Vector2d& q) const override;
 
+		void addObstacle(const MyObstacle& ob) {  // method to quickly add an ob
+			m_obstacles.push_back(ob);
+		}
+
 	private:
 		double getPotential(const Eigen::Vector2d& q) const;
 

@@ -45,12 +45,20 @@ int main(int argc, char** argv) {
     double d_star = 3.0;
     double zetta = 1.0;
     double Q_star = 1.0;
-    double eta = 1.0;
+    double eta = 0.1;
 
     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
+    
+    // Problem2D prob = HW5::getWorkspace1();
+    // amp::Path2D path = algo.plan(prob);
+    // //     // Check your path to make sure that it does not collide with the environment 
+    // bool success = HW5::check(path, prob);
+    
     Path2D path;
     Problem2D prob;
     bool success = HW5::generateAndCheck(algo, path, prob);
+
+
     Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function
@@ -64,6 +72,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw5_figs");
     
     // Arguments following argv correspond to the constructor arguments of MyGDAlgorithm:
-    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
+    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, d_star, zetta, Q_star, eta);
     return 0;
 }
