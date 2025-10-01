@@ -20,14 +20,14 @@ void test_dist_to_ob(){
     MyObstacle test_ob3;
     test_ob3.defineWithPoints(vertices2);
 
-    double dist = test_ob3.closestDistanceToq(Eigen::Vector2d(0.0, 0.0));
+    auto [dist, point] = test_ob3.closestDistanceToq(Eigen::Vector2d(0.0, 0.0));
     std::cout << "dist should be 5 " << dist << std::endl;
-    dist = test_ob3.closestDistanceToq(Eigen::Vector2d(-1.0, 4.0));
-    std::cout << "dist should be sqrt(2) " << dist << std::endl;
-    dist = test_ob3.closestDistanceToq(Eigen::Vector2d(-4.0, 5.0));
-    std::cout << "dist should be 4 " << dist << std::endl;
-    dist = test_ob3.closestDistanceToq(Eigen::Vector2d(3.0, 5.5));
-    std::cout << "dist should be 1 " << dist << std::endl;
+    auto [dist2, point2] = test_ob3.closestDistanceToq(Eigen::Vector2d(-1.0, 4.0));
+    std::cout << "dist should be sqrt(2) " << dist2 << std::endl;
+    auto [dist3, point3] = test_ob3.closestDistanceToq(Eigen::Vector2d(-4.0, 5.0));
+    std::cout << "dist should be 4 " << dist3 << std::endl;
+    auto [dist4, point4] = test_ob3.closestDistanceToq(Eigen::Vector2d(3.0, 5.5));
+    std::cout << "dist should be 1 " << dist4 << std::endl;
     
 
 

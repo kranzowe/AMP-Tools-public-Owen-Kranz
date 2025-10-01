@@ -60,12 +60,13 @@ void MyObstacle::defineWithPoints(const std::vector<Eigen::Vector2d>& vertices_i
     }
 }
 
-double MyObstacle::closestDistanceToq(Eigen::Vector2d q) const {
+std::pair<double, Eigen::Vector2d> MyObstacle::closestDistanceToq(Eigen::Vector2d q) const {
 
     // using projection, but gotta check if it outside the segment (in which case itll be the start or
     // end point)
 
     double min_dist = INFINITY;
+    Eigen::Vector2d global_closest_point;
 
     for (uint16_t i = 0; i < vertices.size(); i++){
         Eigen::Vector2d a;
@@ -101,9 +102,11 @@ double MyObstacle::closestDistanceToq(Eigen::Vector2d q) const {
 
         if (dist < min_dist){
             min_dist = dist;
+            global_closest_point = closest_point;
         }
     }
 
-    return min_dist;
+    return {min_dist, global_closest_point};
+
 
 }

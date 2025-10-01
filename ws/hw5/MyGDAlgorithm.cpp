@@ -54,14 +54,17 @@ double MyPotentialFunction::getPotential(const Eigen::Vector2d& q) const {
 
     double rep;
 
-    for (const auto& obstacle : my_obstacles) {
-        MyObstacle my_ob;
-        my_ob.defineWithPoints(obstacle.verticesCCW());
-        my_obstacles.push_back(my_ob);
+    for (const auto& obstacle : m_obstacles) {
+        auto [di, point] = obstacle.closestDistanceToq(q);
+        if (di>m_Q_star){
+            rep += 0.0;
+        } else{
+            rep += (0.5)*(m_eta)*(((1/di) - (1/m_Q_star))*((1/di) - (1/m_Q_star)));
+        }
     };
 
 
-    return attr;
+    return attr + rep;
 }
 
 
@@ -77,7 +80,18 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q) const
         delta_attr = (m_d_star*m_zetta*(q - m_q_goal)) / dist;
     }
 
-    return delta_attr;
+    Eigen::Vector2d delta_rep;
+
+    for (const auto& obstacle : m_obstacles) {
+        auto [di, c] = obstacle.closestDistanceToq(q);
+        if (di<=m_Q_star){
+            Eigen::Vector2d delta_d = (q - c) / di;
+            delta_rep += (m_eta)*((1/m_Q_star) - (1/di))*(delta_d/(di*di));
+        }
+    };
+
+
+    return delta_attr + delta_rep;
 
 
     }
