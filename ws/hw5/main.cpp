@@ -28,6 +28,9 @@ void test_dist_to_ob(){
     std::cout << "dist should be 4 " << dist3 << std::endl;
     auto [dist4, point4] = test_ob3.closestDistanceToq(Eigen::Vector2d(3.0, 5.5));
     std::cout << "dist should be 1 " << dist4 << std::endl;
+
+    auto [dist5, point5] = test_ob3.distanceToCentroid(Eigen::Vector2d(1.0, 0.0));
+    std::cout << "dist should be 5.5 " << dist5 << std::endl;
     
 
 
@@ -41,11 +44,12 @@ int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
 
+
     // Test your gradient descent algorithm on a random problem.
-    double d_star = 3.0;
-    double zetta = 1.0;
-    double Q_star = 1.0;
-    double eta = 0.1;
+    double d_star = 0.622678;
+    double zetta =  4.36968;
+    double Q_star = 4.13851;
+    double eta = 1.03226;
 
     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
     
@@ -53,12 +57,40 @@ int main(int argc, char** argv) {
     // amp::Path2D path = algo.plan(prob);
     // //     // Check your path to make sure that it does not collide with the environment 
     // bool success = HW5::check(path, prob);
+
+    // int max_success = 0;
     
+    // for (int j = 0; j < 50; j ++){
+    //     int success_count = 0;
+
+    //     double d_star = amp::RNG::randf(0.01, 5.0);
+    //     double zetta = amp::RNG::randf(0.01, 5.0);   
+    //     double Q_star = amp::RNG::randf(0.01, 5.0);
+    //     double eta = amp::RNG::randf(0.01, 5.0);
+    //     // double stdev = amp::RNG::randf(0.01, 5.0);
+    //     // double virtual_ob_size = amp::RNG::randf(0.01, 5.0);
+
+    //     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
+        
+
+    //     for (int i = 0; i < 40; i ++){
+    //         Path2D path;
+    //         Problem2D prob;
+    //         bool success = HW5::generateAndCheck(algo, path, prob, false);
+    //         if (success){
+    //             success_count ++;
+    //         }
+    //     }
+
+    //     if (success_count > max_success){
+    //         max_success = success_count;
+    //         std::cout <<"new max" << success_count<< ", "  << d_star << ", " << zetta << ", " << Q_star << ", " << eta << std::endl;
+    //     }
+    // }
+
     Path2D path;
     Problem2D prob;
     bool success = HW5::generateAndCheck(algo, path, prob);
-
-
     Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function

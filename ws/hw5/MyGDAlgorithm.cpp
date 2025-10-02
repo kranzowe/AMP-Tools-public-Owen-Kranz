@@ -18,7 +18,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 							d_star, zetta, Q_star, eta);
 
     double epsilon = 0.25;
-    double dt = 0.1;
+    double dt = 0.01;
 
     Eigen::Vector2d current_pos = problem.q_init;
     path.waypoints.push_back(problem.q_init);
@@ -37,7 +37,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
         path.waypoints.push_back(current_pos);
 
 
-        if (dists_to_goal.size() > 1001){
+        if (dists_to_goal.size() > 1001 && false){
             // time to detect if we are at a minima        
             // im sure there are a bunch of ways, but im going to use 
             // the standard deviation of the last 100 points
@@ -144,10 +144,14 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q) const
 
     for (const auto& obstacle : m_obstacles) {
         auto [di, c] = obstacle.closestDistanceToq(q);
+        auto [di_cent, cent] = obstacle.distanceToCentroid(q);
         if (di<=m_Q_star){
             if (di > 1e-2){
                 Eigen::Vector2d delta_d = (q - c) / di;
                 delta_rep += (m_eta)*((1/m_Q_star) - (1/di))*(delta_d/(di*di));
+
+                Eigen::Vector2d delta_d_cent = (q - cent) / di_cent;
+                delta_rep += (m_eta)*((1/m_Q_star) - (1/di_cent))*(delta_d_cent/(di_cent*di_cent));
             }
         }
     };

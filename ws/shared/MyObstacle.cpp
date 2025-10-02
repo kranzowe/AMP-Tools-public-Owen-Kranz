@@ -119,3 +119,20 @@ std::pair<double, Eigen::Vector2d> MyObstacle::closestDistanceToq(Eigen::Vector2
 
 
 }
+
+std::pair<double, Eigen::Vector2d> MyObstacle::distanceToCentroid(const Eigen::Vector2d q) const{
+
+    Eigen::Vector2d centroid(0.0,0.0);
+
+    for (uint16_t i = 0; i < vertices.size(); i++){
+        
+        
+        centroid += vertices[i];
+
+    }
+
+    centroid /= vertices.size();
+
+    return {(q - centroid).norm(), centroid};
+
+};

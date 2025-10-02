@@ -16,6 +16,7 @@ class MyObstacle {
         void defineWithPoints(const std::vector<Eigen::Vector2d>& vertices);
 
         std::pair<double, Eigen::Vector2d> closestDistanceToq(const Eigen::Vector2d q) const;
+        std::pair<double, Eigen::Vector2d> distanceToCentroid(const Eigen::Vector2d q) const;
 };
 
 #endif
