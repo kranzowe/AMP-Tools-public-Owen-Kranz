@@ -66,7 +66,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 							d_star, zetta, Q_star, eta, Q_star_cent, eta_cent);
 
     double epsilon = 0.25;
-    double dt = 0.05;
+    double dt = 0.01;
 
     Eigen::Vector2d current_pos = problem.q_init;
     path.waypoints.push_back(problem.q_init);
@@ -79,7 +79,14 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     bool random_walk_time = false;
     uint64_t i_random_walk_start = 0;
 
-    while ((problem.q_goal - current_pos).norm() > epsilon && i < 5e5){
+    // normal dist for random walk 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Create normal distribution (mean=0.0, std_dev=1.0)
+    std::normal_distribution<double> normal_dist(0.0, 0.1);
+
+    while ((problem.q_goal - current_pos).norm() > epsilon && i < 4e5){
         i++;
         dists_to_goal.push_back((problem.q_goal - current_pos).norm());
 
@@ -89,29 +96,34 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
             current_pos += -grad*dt;
             path.waypoints.push_back(current_pos);
         }else{
-            // time to random walk for 100 steps
+            // time to random walk for 10 steps
             if (i_random_walk_start == 0){
                 i_random_walk_start = i;
-            }else if (i_random_walk_start > 100){
+            }else if (i - i_random_walk_start > 20){
                 i_random_walk_start = 0;
                 random_walk_time = false;
     
             }else{
-                i_random_walk_start++;
-
                 // select random walk positions from covariance
+                double x_sample = normal_dist(gen);
+                double y_sample = normal_dist(gen);
 
+                Eigen::Vector2d point(x_sample, y_sample);
 
+                // check collision 
+                bool collision = false;
+                for (const auto& ob : my_obstacles){
+                    if (ob.collisionCheckAlongLine(current_pos, current_pos + point)){
+                        collision = true;
+                        break;
+                    }}
+                if (!collision){
+                    current_pos += point;
+                }
             }
-
-
-
         }
 
-
-
-
-        if (dists_to_goal.size() > 1001 && !random_walk_time && false){
+        if (dists_to_goal.size() > 1001 && !random_walk_time){
             // time to detect if we are at a minima        
             // im sure there are a bunch of ways, but im going to use 
             // the standard deviation of the last 1000 points
@@ -128,53 +140,10 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
             // Return standard deviation
             double stdev = std::sqrt(variance);
 
-            if (stdev < 0.01 && false){
+            if (stdev < 0.01){
                 // gonna backtrack to the start. Add an obstacle at the mean 
-                std::vector<Eigen::Vector2d> recent_points(path.waypoints.end() - 1000, path.waypoints.end());
-                Eigen::Vector2d mean_local_min = Eigen::Vector2d::Zero();
-                for (const auto& point : recent_points) {
-                    mean_local_min += point;
-                }
-                mean_local_min /= static_cast<double>(recent_points.size());
-                        
-                // path.waypoints.clear();
-                // path.waypoints.push_back(problem.q_init);
-                // current_pos = problem.q_init;
+                random_walk_time = true;
 
-                size_t backtrack_amount = 1000;
-
-
-                // FIXED: Create reverse path from the last 'backtrack_amount' waypoints
-                std::vector<Eigen::Vector2d> reverse_path;
-                for (size_t k = 1; k <= backtrack_amount && k < path.waypoints.size(); ++k) {
-                    reverse_path.push_back(path.waypoints[path.waypoints.size() - 1 - k]);
-                }
-
-                // Add the reverse path to continue the trajectory
-                for (const auto& point : reverse_path) {
-                    path.waypoints.push_back(point);
-                }
-
-                // Set current position to the backtracked location
-                current_pos = reverse_path.back(); // Last point in reverse path (earliest chronologically)
-
-
-                // define a new, virtual obstacle
-                MyObstacle virt_ob;
-                double width = 0.1;
-                std::vector<Eigen::Vector2d> vertices = {
-                            mean_local_min + Eigen::Vector2d(width, width),
-                            mean_local_min + Eigen::Vector2d(-width, width),
-                            mean_local_min + Eigen::Vector2d(-width, -width),
-                            mean_local_min + Eigen::Vector2d(width, -width),
-                            };
-                virt_ob.defineWithPoints(vertices);
-                potential.addObstacle(virt_ob);
-
-
-                
-                dists_to_goal.clear();
-                // i /=2;
             } 
         }
         
@@ -250,8 +219,8 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q) const
     };
 
     Eigen::Vector2d total = delta_attr + delta_rep;
-    if (total.norm() > 5.0){
-        total = (total/total.norm()) *5.0;
+    if (total.norm() > 25.0){
+        total = (total/total.norm()) *25.0;
     }
     return total;
 

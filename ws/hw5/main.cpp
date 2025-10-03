@@ -3,6 +3,7 @@
 
 // Include the correct homework header
 #include "hw/HW5.h"
+#include "hw/HW2.h"
 
 // Include any custom headers you created in your workspace
 #include "MyGDAlgorithm.h"
@@ -55,7 +56,7 @@ int main(int argc, char** argv) {
 
     MyGDAlgorithm algo(d_star, zetta, Q_star, eta, Q_star_cent, eta_cent);
     
-    Problem2D prob = HW5::getWorkspace1();
+    Problem2D prob = HW2::getWorkspace2();
     amp::Path2D path = algo.plan(prob);
     //     // Check your path to make sure that it does not collide with the environment 
     bool success = HW5::check(path, prob);
