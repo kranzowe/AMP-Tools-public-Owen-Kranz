@@ -46,34 +46,40 @@ int main(int argc, char** argv) {
 
 
     // Test your gradient descent algorithm on a random problem.
-    double d_star = 0.622678;
-    double zetta =  4.36968;
-    double Q_star = 4.13851;
-    double eta = 1.03226;
+    double d_star = 4.19087;
+    double zetta =  4.75439;
+    double Q_star = 2.48336;
+    double eta = 4.33042;
+    double Q_star_cent = 6.18569;
+    double eta_cent = 2.33843;
 
-    MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
+    MyGDAlgorithm algo(d_star, zetta, Q_star, eta, Q_star_cent, eta_cent);
     
-    // Problem2D prob = HW5::getWorkspace1();
-    // amp::Path2D path = algo.plan(prob);
-    // //     // Check your path to make sure that it does not collide with the environment 
-    // bool success = HW5::check(path, prob);
+    Problem2D prob = HW5::getWorkspace1();
+    amp::Path2D path = algo.plan(prob);
+    //     // Check your path to make sure that it does not collide with the environment 
+    bool success = HW5::check(path, prob);
+    Visualizer::makeFigure(prob, path);
 
     // int max_success = 0;
     
     // for (int j = 0; j < 50; j ++){
+    //     std::cout << j << std::endl;
     //     int success_count = 0;
 
-    //     double d_star = amp::RNG::randf(0.01, 5.0);
-    //     double zetta = amp::RNG::randf(0.01, 5.0);   
-    //     double Q_star = amp::RNG::randf(0.01, 5.0);
-    //     double eta = amp::RNG::randf(0.01, 5.0);
+    //     double d_star = 4.19087;
+    //     double zetta =  4.75439;
+    //     double Q_star = 2.48336;
+    //     double eta = 4.33042;
+    //     double Q_star_cent = amp::RNG::randf(0.01, 9.0);
+    //     double eta_cent = amp::RNG::randf(0.01, 9.0);
     //     // double stdev = amp::RNG::randf(0.01, 5.0);
     //     // double virtual_ob_size = amp::RNG::randf(0.01, 5.0);
 
-    //     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
+    //     MyGDAlgorithm algo(d_star, zetta, Q_star, eta, Q_star_cent, eta_cent);
         
 
-    //     for (int i = 0; i < 40; i ++){
+    //     for (int i = 0; i < 30; i ++){
     //         Path2D path;
     //         Problem2D prob;
     //         bool success = HW5::generateAndCheck(algo, path, prob, false);
@@ -84,14 +90,14 @@ int main(int argc, char** argv) {
 
     //     if (success_count > max_success){
     //         max_success = success_count;
-    //         std::cout <<"new max" << success_count<< ", "  << d_star << ", " << zetta << ", " << Q_star << ", " << eta << std::endl;
+    //         std::cout <<"new max" << success_count<< ", "  << d_star << ", " << zetta << ", " << Q_star << ", " << eta << ", " << Q_star_cent << ", " << eta_cent << std::endl;
     //     }
     // }
 
-    Path2D path;
-    Problem2D prob;
-    bool success = HW5::generateAndCheck(algo, path, prob);
-    Visualizer::makeFigure(prob, path);
+    // Path2D path;
+    // Problem2D prob;
+    // bool success = HW5::generateAndCheck(algo, path, prob);
+    // Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function
     std::vector<MyObstacle> my_obstacles;
@@ -100,10 +106,10 @@ int main(int argc, char** argv) {
         my_ob.defineWithPoints(obstacle.verticesCCW());
         my_obstacles.push_back(my_ob);
     };
-    Visualizer::makeFigure(MyPotentialFunction{prob.q_goal, my_obstacles, d_star, zetta, Q_star, eta}, prob, 30);
+    Visualizer::makeFigure(MyPotentialFunction{prob.q_goal, my_obstacles, d_star, zetta, Q_star, eta, Q_star_cent, eta_cent}, prob, 30);
     Visualizer::saveFigures(true, "hw5_figs");
     
     // Arguments following argv correspond to the constructor arguments of MyGDAlgorithm:
-    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, d_star, zetta, Q_star, eta);
+    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, d_star, zetta, Q_star, eta, Q_star_cent, eta_cent);
     return 0;
 }

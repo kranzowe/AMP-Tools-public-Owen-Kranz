@@ -10,16 +10,18 @@
 class MyGDAlgorithm : public amp::GDAlgorithm {
 	public:
 		// Consider defining a class constructor to easily tune parameters, for example: 
-		MyGDAlgorithm(double d_star, double zetta, double Q_star, double eta) :
+		MyGDAlgorithm(double d_star, double zetta, double Q_star, double eta, double Q_star_cent, double eta_cent) :
 			d_star(d_star),
 			zetta(zetta),
 			Q_star(Q_star),
-			eta(eta) {}
+			eta(eta),
+			Q_star_cent(Q_star_cent),
+			eta_cent(eta_cent) {}
 
 		// Override this method to solve a given problem.
 		virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 	private:
-		double d_star, zetta, Q_star, eta;
+		double d_star, zetta, Q_star, eta, Q_star_cent, eta_cent;
 		// Add additional member variables here...
 };
 
@@ -28,13 +30,13 @@ class MyPotentialFunction : public amp::PotentialFunction2D {
 		// gonna need some stuff to compute potential
 		Eigen::Vector2d m_q_goal;
 		std::vector<MyObstacle> m_obstacles;
-		double m_d_star, m_zetta, m_Q_star, m_eta;
+		double m_d_star, m_zetta, m_Q_star, m_eta, m_Q_star_cent, m_eta_cent;
     public:
 		// constructor to set params
 		MyPotentialFunction(const Eigen::Vector2d& q_goal,
 							const std::vector<MyObstacle>& obstacles, 
-							double d_star, double zetta, double Q_star, double eta) :
-			m_q_goal(q_goal), m_obstacles(obstacles), m_d_star(d_star), m_zetta(zetta), m_Q_star(Q_star), m_eta(eta)
+							double d_star, double zetta, double Q_star, double eta, double Q_star_cent, double eta_cent) :
+			m_q_goal(q_goal), m_obstacles(obstacles), m_d_star(d_star), m_zetta(zetta), m_Q_star(Q_star), m_eta(eta), m_Q_star_cent(Q_star_cent), m_eta_cent(eta_cent)
 			{}
 		
 		// Returns the potential function value (height) for a given 2D point. 
