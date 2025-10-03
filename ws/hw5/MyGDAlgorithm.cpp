@@ -77,6 +77,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     std::vector<double> dists_to_goal;
 
     bool random_walk_time = false;
+    uint64_t num_random_walks = 0;
     uint64_t i_random_walk_start = 0;
 
     // normal dist for random walk 
@@ -93,7 +94,17 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
         if (!random_walk_time){
             Eigen::Vector2d grad = potential.getGradient(current_pos);
 
-            current_pos += -grad*dt;
+            bool collision_grad = false;
+            for (const auto& ob : my_obstacles){
+                    if (ob.collisionCheckAlongLine(current_pos, current_pos - grad*dt)){
+                        collision_grad = true;
+                        break;
+                    }}
+
+            if (!collision_grad){
+                current_pos += -grad*dt;
+            }
+            // wont move and will eventuall random walk
             path.waypoints.push_back(current_pos);
         }else{
             // time to random walk for 10 steps
@@ -108,6 +119,12 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
                 double x_sample = normal_dist(gen);
                 double y_sample = normal_dist(gen);
 
+                if (num_random_walks > 6){
+                    //time to get desperate
+                    x_sample *= (num_random_walks/10.0) + 1.0;
+                    y_sample *= (num_random_walks/10.0) + 1.0;
+                }
+
                 Eigen::Vector2d point(x_sample, y_sample);
 
                 // check collision 
@@ -116,7 +133,18 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
                     if (ob.collisionCheckAlongLine(current_pos, current_pos + point)){
                         collision = true;
                         break;
-                    }}
+                    }
+                    if (ob.collisionCheck(current_pos + point)){
+                        collision = true;
+                        break;
+                    }
+                    auto [dist1, point1] = ob.closestDistanceToq(current_pos + point);
+                    auto [dist2, point2] = ob.closestDistanceToq(current_pos);
+                    if (dist1 <= dist2 && dist2 < 0.5){
+                        collision = true;
+                        break;
+                    }
+                    }
                 if (!collision){
                     current_pos += point;
                 }
@@ -140,9 +168,10 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
             // Return standard deviation
             double stdev = std::sqrt(variance);
 
-            if (stdev < 0.01){
+            if (stdev < 0.03 && (problem.q_goal - current_pos).norm() > 0.5){
                 // gonna backtrack to the start. Add an obstacle at the mean 
                 random_walk_time = true;
+                num_random_walks ++;
 
             } 
         }
@@ -208,10 +237,13 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q) const
         auto [di, c] = obstacle.closestDistanceToq(q);
         auto [di_cent, cent] = obstacle.distanceToCentroid(q);
         if (di<=m_Q_star){
-            if (di > 1e-2){
+            if (di > 1e-5){
                 Eigen::Vector2d delta_d = (q - c) / di;
                 delta_rep += (m_eta)*((1/m_Q_star) - (1/di))*(delta_d/(di*di));
-
+            }
+        }
+        if (di_cent<=m_Q_star_cent){
+            if (di_cent > 1e-5){
                 Eigen::Vector2d delta_d_cent = (q - cent) / di_cent;
                 delta_rep += (m_eta_cent)*((1/m_Q_star_cent) - (1/di_cent))*(delta_d_cent/(di_cent*di_cent));
             }
