@@ -32,6 +32,29 @@ std::pair<std::size_t, std::size_t> MyGridCSpace2D::getCellFromPoint(double x0, 
     return {cell_x0, cell_x1};
 }
 
+Eigen::Vector2d MyGridCSpace2D::getPointFromCell(double c0, double c1) const {
+    // just the inverse of the above...
+    double x0_min = m_x0_bounds.first; //gotta get a bunch o variaubles
+    double x0_max = m_x0_bounds.second;
+    double x1_min = m_x1_bounds.first;
+    double x1_max = m_x1_bounds.second;
+
+    auto grid_size = size();
+    std::size_t x0_cells = grid_size.first;
+    std::size_t x1_cells = grid_size.second;
+
+    double delta_x0 = (x0_max - x0_min) / x0_cells;
+    double delta_x1 = (x1_max - x1_min) / x1_cells;
+
+    double x = delta_x0 * c0 + (delta_x0/2.0);
+    double y = delta_x1 * c1 + (delta_x0/2.0); // adding half so we are in the middle of the cells
+
+    Eigen::Vector2d point(x,y);
+    
+    return point;
+}
+
+
 // Override this method for computing all of the boolean collision values for each cell in the cspace
 std::unique_ptr<amp::GridCSpace2D> MyManipulatorCSConstructor::construct(const amp::LinkManipulator2D& manipulator, const amp::Environment2D& env) {
     // Create an object of my custom cspace type (e.g. MyGridCSpace2D) and store it in a unique pointer. 

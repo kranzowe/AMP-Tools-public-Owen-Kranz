@@ -17,6 +17,8 @@ class MyGridCSpace2D : public amp::GridCSpace2D {
         // Override this method for determining which cell a continuous point belongs to
         virtual std::pair<std::size_t, std::size_t> getCellFromPoint(double x0, double x1) const override;
 
+        Eigen::Vector2d getPointFromCell(double c0, double c1) const;
+
 };
 
 // Derive the HW4 ManipulatorCSConstructor class and override the missing method
