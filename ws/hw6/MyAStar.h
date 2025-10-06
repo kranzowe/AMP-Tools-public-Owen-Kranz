@@ -10,3 +10,8 @@ class MyAStarAlgo : public amp::AStar {
     public:
         virtual GraphSearchResult search(const amp::ShortestPathProblem& problem, const amp::SearchHeuristic& heuristic) override;
 };
+
+class MyNode{
+    public:
+        
+};

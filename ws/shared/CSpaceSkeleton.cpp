@@ -46,8 +46,8 @@ Eigen::Vector2d MyGridCSpace2D::getPointFromCell(double c0, double c1) const {
     double delta_x0 = (x0_max - x0_min) / x0_cells;
     double delta_x1 = (x1_max - x1_min) / x1_cells;
 
-    double x = delta_x0 * c0 + (delta_x0/2.0);
-    double y = delta_x1 * c1 + (delta_x0/2.0); // adding half so we are in the middle of the cells
+    double x = ((delta_x0 * c0) + (delta_x0/2.0)) + x0_min;
+    double y = ((delta_x1 * c1) + (delta_x1/2.0)) + x1_min; // adding half so we are in the middle of the cells
 
     Eigen::Vector2d point(x,y);
     
