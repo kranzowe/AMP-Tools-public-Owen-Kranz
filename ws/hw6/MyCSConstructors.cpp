@@ -186,34 +186,31 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
     if (run_count >= 1e6){
         std::cout << "loop 1 took too long" << std::endl;
-    }
+    
 
-    // AI helped me here to visualize
-    std::cout << "Wavefront Grid:" << std::endl;
-    for (int j = m-1; j >= 0; j--) {  // Print from top to bottom
-        for (int i = 0; i < n; i++) {
-            int val = wavefront_grid(i, j);
-            if (i == cell_init.first && j == cell_init.second){
-                std::cout << " WM ";  // init
-            }else if (val == 1) {
-                std::cout << " # ";  // Obstacle
-            } else if (val == 2) {
-                std::cout << " G ";  // Goal
-            } else if (val > 2) {
-                std::cout << std::setw(2) << val << " ";  // Distance values
-            } else {
-                std::cout << " . ";  // Unvisited
+        // AI helped me here to visualize
+        std::cout << "Wavefront Grid:" << std::endl;
+        for (int j = m-1; j >= 0; j--) {  // Print from top to bottom
+            for (int i = 0; i < n; i++) {
+                int val = wavefront_grid(i, j);
+                if (i == cell_init.first && j == cell_init.second){
+                    std::cout << " WM ";  // init
+                }else if (val == 1) {
+                    std::cout << " # ";  // Obstacle
+                } else if (val == 2) {
+                    std::cout << " G ";  // Goal
+                } else if (val > 2) {
+                    std::cout << std::setw(2) << val << " ";  // Distance values
+                } else {
+                    std::cout << " . ";  // Unvisited
+                }
             }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
 
     
     // now do gradient descent on dis thing
-
-
-    // gonna first check if init or final config are in obstacle
-
     
     amp::Path2D path;
     path.waypoints.push_back(q_init);
@@ -314,8 +311,13 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
         }
 
         // move to that lowest cell. 
+        if (lowest_cell[0] == current_cell[0] && lowest_cell[1] == current_cell[1]){
+            // stuck :/
+            return path;
+        } 
 
         current_cell = lowest_cell;
+
 
         Eigen::Vector2d new_point = mygrid_cspace.getPointFromCell(current_cell[0], current_cell[1]);
 
@@ -328,7 +330,21 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
     path.waypoints.push_back(q_goal);
 
-    if (isManipulator) {
+   if (isManipulator) {
+        for (auto& waypoint : path.waypoints){
+            // check range constraints
+            if (waypoint[0] < 0){
+                waypoint[0] = 2*M_PI + waypoint[0];
+            } else if(waypoint[0] > 2*M_PI){
+                waypoint[0] = waypoint[0] - 2*M_PI;
+            }
+            if (waypoint[1] < 0){
+                waypoint[1] = 2*M_PI + waypoint[1];
+            } else if(waypoint[1] > 2*M_PI){
+                waypoint[1] = waypoint[1] - 2*M_PI;
+            }
+        }
+
         Eigen::Vector2d bounds0 = Eigen::Vector2d(0.0, 0.0);
         Eigen::Vector2d bounds1 = Eigen::Vector2d(2*M_PI, 2*M_PI);
         amp::unwrapWaypoints(path.waypoints, bounds0, bounds1);

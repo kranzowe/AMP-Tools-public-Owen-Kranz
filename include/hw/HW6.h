@@ -111,73 +111,76 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 my_obstacles.push_back(my_ob);
             };
             amp::ManipulatorState init_state;
-            int attempts = 0;
-            while (attempts < 1e3){
-                attempts++;
-                // Get the initial state from IK
+            bool found_valid_init = false;
+            
+            for (int attempts = 0; attempts < 1000 && !found_valid_init; attempts++) {
                 amp::ManipulatorState test_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
-                test_state.resize(link_manipulator_agent.nLinks());
-
+                
                 bool collision = false;
                 
-                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+                // check all links for collision
+                for (uint32_t i = 0; i < link_manipulator_agent.nLinks() && !collision; ++i) {
                     Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
                     Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
-                    for (const auto& ob : my_obstacles){
-                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
+                    
+                    // Check this link segment against all obstacles
+                    for (const auto& ob : my_obstacles) {
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)) {
                             collision = true;
                             break;
-                        }}
-                    if (collision){
-                        break;
+                        }
                     }
                 }
-                if (!collision){
-                    init_state = test_state;
-                    break;
-
-                }
                 
+                if (!collision) {
+                    init_state = test_state;
+                    found_valid_init = true;
+                    std::cout << "found valid init state after " << attempts << " attempts" << std::endl;
+                }
+            }
+            
+            if (!found_valid_init) {
+                std::cout << "could not find collision-free init state" << std::endl;
+                init_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
             }
 
 
             amp::ManipulatorState goal_state;
-            attempts = 0;
-            while (attempts < 1e3){
-                attempts++;
-                // Get the initial state from IK
+            bool found_valid_goal = false;
+            
+            for (int attempts = 0; attempts < 1000 && !found_valid_goal; attempts++) {
                 amp::ManipulatorState test_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
-                test_state.resize(link_manipulator_agent.nLinks());
-
+                
                 bool collision = false;
                 
-                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+                for (uint32_t i = 0; i < link_manipulator_agent.nLinks() && !collision; ++i) {
                     Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
                     Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
-                    for (const auto& ob : my_obstacles){
-                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
+                    
+                    for (const auto& ob : my_obstacles) {
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)) {
                             collision = true;
                             break;
-                        }}
-                    if (collision){
-                        break;
+                        }
                     }
                 }
-                if (!collision){
-                    goal_state = test_state;
-                    break;
-
-                }
                 
+                if (!collision) {
+                    goal_state = test_state;
+                    found_valid_goal = true;
+                    std::cout << "found valid goal state after " << attempts << " attempts" << std::endl;
+                }
             }
-            // Get the goal state from IK
             
+            if (!found_valid_goal) {
+                std::cout << "could not find collision-free goal state" << std::endl;
+                goal_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
+            }
 
             // Construct the grid cspace
             grid_cspace = m_cspace_constructor->construct(link_manipulator_agent, problem);
 
-            // Now that we have everything, we can call method to plan in C-space using the WaveFront algorithm
-            // Note, we can use the `convert` overloads to easily go between ManipulatorState and ManipulatorState2Link
+            // Plan with validated states
             return m_wf_algo->planInCSpace(convert(init_state), convert(goal_state), *grid_cspace, true);
         }
 

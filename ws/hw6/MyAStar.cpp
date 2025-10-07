@@ -22,7 +22,11 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
     open_set_weights.push_back(0.0);
     open_set_heuristics.push_back(heuristic(problem.init_node));
 
-    while (true){
+    int attempts = 0;
+
+
+    while (true && attempts < 1e5){
+        attempts++;
 
         if (open_set.empty()){
             std::cout<< "NO SOLUTION" << std::endl;
@@ -43,42 +47,15 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
         amp::Node current_node = open_set[min_index];
         amp::Node current_parent = open_set_parents[min_index];
         double current_weight = open_set_weights[min_index];
-        // dont need the current heuristic cuz that wont go in the closed set
-
-        
-        // add to the closed...
-        // gotta chekc if its in the closed set already
-        bool is_in_closed = false;
-        int index_of_duplicate_in_closed;
-        for (size_t i = 0; i < closed_set.size(); i++){
-            if (closed_set[i] == current_node){
-               is_in_closed = true; 
-               index_of_duplicate_in_closed = i;
-            }
-        }
-
-        if (!is_in_closed){
-            closed_set.push_back(current_node);
-            closed_set_weights.push_back(current_weight);
-            closed_set_parents.push_back(current_parent);
-        } else{
-            // it is in.. gotta check if it improves cost
-            if (current_weight < closed_set_weights[index_of_duplicate_in_closed]){
-                // cost improved! erase dat duplicate!
-                closed_set.erase(closed_set.begin() + index_of_duplicate_in_closed);
-                closed_set_parents.erase(closed_set_parents.begin() + index_of_duplicate_in_closed);
-                closed_set_weights.erase(closed_set_weights.begin() + index_of_duplicate_in_closed);
-
-                // now its erased, push the current
-                closed_set.push_back(current_node);
-                closed_set_weights.push_back(current_weight);
-                closed_set_parents.push_back(current_parent);
-            }
-        }
         
         if (current_node == problem.goal_node){
             //we made ittttt
             // add to closed and break
+            // dont need the current heuristic cuz that wont go in the closed set
+
+            closed_set.push_back(current_node);
+            closed_set_weights.push_back(current_weight);
+            closed_set_parents.push_back(current_parent);
             break;
         }
 
@@ -88,16 +65,64 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
         open_set_parents.erase(open_set_parents.begin() + min_index);
         open_set_weights.erase(open_set_weights.begin() + min_index);
 
+        //check if we aleady processed this node
+        bool already_processed = false;
+        for (size_t i = 0; i < closed_set.size(); i++){
+            if (closed_set[i] == current_node){
+                already_processed = true;
+                break;
+            }
+        }
+        if (already_processed) continue; // Skip if already processed
+
+        // dont need the current heuristic cuz that wont go in the closed set
+
+        //add to closed
+        closed_set.push_back(current_node);
+        closed_set_weights.push_back(current_weight);
+        closed_set_parents.push_back(current_parent);
+
         // add all children to the open set
         // needed ai for this next line cuz like what
         std::vector<amp::Node> children = problem.graph->children(current_node);
         std::vector<double> edge_weights = problem.graph->outgoingEdges(current_node);
 
         for (size_t i = 0; i < children.size(); i++){
-            open_set.push_back(children[i]);
-            open_set_weights.push_back(edge_weights[i] + current_weight);
-            open_set_parents.push_back(current_node); //current node is the parent 
-            open_set_heuristics.push_back(heuristic(children[i]));
+
+            // add to the opem...
+            // gotta chekc if its in the open set already
+            bool is_in_open = false;
+            int index_of_duplicate_in_open;
+            for (size_t i = 0; i < open_set.size(); i++){
+                if (open_set[i] == children[i]){
+                is_in_open = true; 
+                index_of_duplicate_in_open = i;
+                }
+            }
+
+            if (!is_in_open){
+            
+                open_set.push_back(children[i]);
+                open_set_weights.push_back(edge_weights[i] + current_weight);
+                open_set_parents.push_back(current_node); //current node is the parent 
+                open_set_heuristics.push_back(heuristic(children[i]));
+
+            } else{
+                // it is in.. gotta check if it improves cost
+                if (current_weight + edge_weights[i] < open_set_weights[index_of_duplicate_in_open]){
+                    // cost improved! erase dat duplicate!
+                    open_set.erase(open_set.begin() + index_of_duplicate_in_open);
+                    open_set_parents.erase(open_set_parents.begin() + index_of_duplicate_in_open);
+                    open_set_weights.erase(open_set_weights.begin() + index_of_duplicate_in_open);
+                    open_set_heuristics.erase(open_set_heuristics.begin() + index_of_duplicate_in_open);
+
+                    // now its erased, push the current
+                    open_set.push_back(children[i]);
+                    open_set_weights.push_back(edge_weights[i] + current_weight);
+                    open_set_parents.push_back(current_node); //current node is the parent 
+                    open_set_heuristics.push_back(heuristic(children[i]));
+                }
+            }
         }
 
         
@@ -111,8 +136,9 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
 
     size_t current_index = closed_set.size() - 1;
     result.path_cost = closed_set_weights[current_index];
-
-    while(closed_set[current_index] != problem.init_node){
+    attempts = 0;
+    while(closed_set[current_index] != problem.init_node && attempts <100){
+        attempts ++;
         
         // add current node
         result.node_path.push_back(closed_set[current_index]);
