@@ -1,5 +1,5 @@
 #include "ManipulatorSkeleton.h"
-
+#include "MyObstacle.h"
 
 MyManipulator2D::MyManipulator2D()
     : LinkManipulator2D({1.0, 1.0}) // Default to a 2-link with all links of 1.0 length
@@ -63,7 +63,12 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
     double a1 = m_link_lengths[0];
     double a2 = m_link_lengths[1];
     if (nLinks() == 3) {
-        for (double theta_1 = 0; theta_1 <= 2.0*M_PI + 0.1; theta_1 += 0.1){
+
+        // changing this to randomly sample theta 1
+        int attempts = 0;
+        while(attempts < 3000){
+            attempts++;
+            double theta_1 = amp::RNG::randf(0.0, 2.0 * M_PI);
             
             a1 = m_link_lengths[1];
             a2 = m_link_lengths[2]; // increment these
@@ -113,7 +118,8 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
         LOG("robo cant reach :/");
         return joint_angles;  // Returns zeros
     }
-    sin_theta_2 = std::sqrt(1.0 - cos_theta_2*cos_theta_2); 
+    double sign = (amp::RNG::randf(0.0, 1.0) < 0.5) ? -1.0 : 1.0;
+    sin_theta_2 = sign * std::sqrt(1.0 - cos_theta_2*cos_theta_2);
 
     cos_theta_1 = (1.0/(x*x + y*y))*((x*(a1+(a2*cos_theta_2))) + (y*a2*sin_theta_2));
     sin_theta_1 = (1.0/(x*x + y*y))*((y*(a1+(a2*cos_theta_2))) - (x*a2*sin_theta_2));
@@ -133,6 +139,10 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
 
     return joint_angles;
 }
+
+
+
+  
 
 amp::ManipulatorState MyManipulator2D::nJointLogic(const Eigen::Vector2d& end_effector_location) const {
     // Implement inverse kinematics here

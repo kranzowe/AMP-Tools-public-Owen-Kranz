@@ -8,6 +8,7 @@
 #include "tools/ConfigurationSpace.h"
 #include "tools/Graph.h"
 #include "tools/Algorithms.h"
+#include "MyObstacle.h"
 
 #include "hw/HW4.h"
 
@@ -101,11 +102,76 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
         virtual amp::ManipulatorTrajectory2Link plan(const LinkManipulator2D& link_manipulator_agent, const amp::Problem2D& problem) override {
             ASSERT(link_manipulator_agent.nLinks() == 2, "Manipulator must have two links");
 
-            // Get the initial state from IK
-            amp::ManipulatorState init_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
+            // custom to check for collisions
 
+            std::vector<MyObstacle> my_obstacles;
+            for (const auto& obstacle : problem.obstacles) {
+                MyObstacle my_ob;
+                my_ob.defineWithPoints(obstacle.verticesCCW());
+                my_obstacles.push_back(my_ob);
+            };
+            amp::ManipulatorState init_state;
+            int attempts = 0;
+            while (attempts < 1e3){
+                attempts++;
+                // Get the initial state from IK
+                amp::ManipulatorState test_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
+                test_state.resize(link_manipulator_agent.nLinks());
+
+                bool collision = false;
+                
+                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+                    Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
+                    Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
+                    for (const auto& ob : my_obstacles){
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
+                            collision = true;
+                            break;
+                        }}
+                    if (collision){
+                        break;
+                    }
+                }
+                if (!collision){
+                    init_state = test_state;
+                    break;
+
+                }
+                
+            }
+
+
+            amp::ManipulatorState goal_state;
+            attempts = 0;
+            while (attempts < 1e3){
+                attempts++;
+                // Get the initial state from IK
+                amp::ManipulatorState test_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
+                test_state.resize(link_manipulator_agent.nLinks());
+
+                bool collision = false;
+                
+                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+                    Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
+                    Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
+                    for (const auto& ob : my_obstacles){
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
+                            collision = true;
+                            break;
+                        }}
+                    if (collision){
+                        break;
+                    }
+                }
+                if (!collision){
+                    goal_state = test_state;
+                    break;
+
+                }
+                
+            }
             // Get the goal state from IK
-            amp::ManipulatorState goal_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
+            
 
             // Construct the grid cspace
             grid_cspace = m_cspace_constructor->construct(link_manipulator_agent, problem);

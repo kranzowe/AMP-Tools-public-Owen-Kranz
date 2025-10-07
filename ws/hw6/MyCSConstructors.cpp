@@ -193,7 +193,9 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
     for (int j = m-1; j >= 0; j--) {  // Print from top to bottom
         for (int i = 0; i < n; i++) {
             int val = wavefront_grid(i, j);
-            if (val == 1) {
+            if (i == cell_init.first && j == cell_init.second){
+                std::cout << " WM ";  // init
+            }else if (val == 1) {
                 std::cout << " # ";  // Obstacle
             } else if (val == 2) {
                 std::cout << " G ";  // Goal
@@ -208,6 +210,10 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
     
     // now do gradient descent on dis thing
+
+
+    // gonna first check if init or final config are in obstacle
+
     
     amp::Path2D path;
     path.waypoints.push_back(q_init);
@@ -218,7 +224,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
     while ((current_cell[0] != cell_goal.first || current_cell[1] != cell_goal.second) && run_count < 1e5){
         run_count ++;
-        Eigen::Vector2i lowest_cell;
+        Eigen::Vector2i lowest_cell = current_cell;
         int lowest_value = 1e6;
         if (!isManipulator){
             if (current_cell[0] != 0){ // can look left
