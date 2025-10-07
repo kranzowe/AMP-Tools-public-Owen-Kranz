@@ -95,34 +95,87 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
             for (uint64_t j = 0; j < m; j++){
                 
                 bool set_ij = false;
-                if (i != 0){ // allowed to move left
-                    if (wavefront_grid(i-1, j) == searching_for && wavefront_grid(i, j) == 0){
-                        wavefront_grid(i, j) = searching_for + 1;
-                        set_ij = true;
+                if (!isManipulator){
+                    if (i != 0){ // allowed to move left
+                        if (wavefront_grid(i-1, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
                     }
-                }
-                if (i != n-1){ // allowed to move right
-                    if (wavefront_grid(i+1, j) == searching_for && wavefront_grid(i, j) == 0){
-                        wavefront_grid(i, j) = searching_for + 1;
-                        set_ij = true;
+                    if (i != n-1){ // allowed to move right
+                        if (wavefront_grid(i+1, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
                     }
-                }
-                if (j != 0){ // allowed to move down
-                    if (wavefront_grid(i, j-1) == searching_for && wavefront_grid(i, j) == 0){
-                        wavefront_grid(i, j) = searching_for + 1;
-                        set_ij = true;
+                    if (j != 0){ // allowed to move down
+                        if (wavefront_grid(i, j-1) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
                     }
-                }
-                if (j != m-1){ // allowed to move up
-                    if (wavefront_grid(i, j+1) == searching_for && wavefront_grid(i, j) == 0){
-                        wavefront_grid(i, j) = searching_for + 1;
-                        set_ij = true;
+                    if (j != m-1){ // allowed to move up
+                        if (wavefront_grid(i, j+1) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
                     }
-                }
 
-                if (set_ij){ // gotta check if we set the init
-                    if (i == cell_init.first && j == cell_init.second){
-                        hit_goal = true; // should break the while loop
+                    if (set_ij){ // gotta check if we set the init
+                        if (i == cell_init.first && j == cell_init.second){
+                            hit_goal = true; // should break the while loop
+                        }
+                    }
+                } else{ // is a manipulator, can wrap around
+                    if (i != 0){ // allowed to move left
+                        if (wavefront_grid(i-1, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }else{
+                        if (wavefront_grid(n-1, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }
+                    if (i != n-1){ // allowed to move right
+                        if (wavefront_grid(i+1, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }else{
+                        if (wavefront_grid(0, j) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }
+                    if (j != 0){ // allowed to move down
+                        if (wavefront_grid(i, j-1) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }else{
+                        if (wavefront_grid(i, m-1) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }
+                    if (j != m-1){ // allowed to move up
+                        if (wavefront_grid(i, j+1) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }else{
+                        if (wavefront_grid(i, 0) == searching_for && wavefront_grid(i, j) == 0){
+                            wavefront_grid(i, j) = searching_for + 1;
+                            set_ij = true;
+                        }
+                    }
+
+                    if (set_ij){ // gotta check if we set the init
+                        if (i == cell_init.first && j == cell_init.second){
+                            hit_goal = true; // should break the while loop
+                        }
                     }
 
                 }
@@ -167,33 +220,91 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
         run_count ++;
         Eigen::Vector2i lowest_cell;
         int lowest_value = 1e6;
-        if (current_cell[0] != 0){ // can look left
-            if (wavefront_grid(current_cell[0] - 1, current_cell[1]) < lowest_value && 
-            wavefront_grid(current_cell[0] - 1, current_cell[1]) > 1){
-                lowest_value = wavefront_grid(current_cell[0] - 1, current_cell[1]);
-                lowest_cell = Eigen::Vector2i(current_cell[0] - 1, current_cell[1]);
+        if (!isManipulator){
+            if (current_cell[0] != 0){ // can look left
+                if (wavefront_grid(current_cell[0] - 1, current_cell[1]) < lowest_value && 
+                wavefront_grid(current_cell[0] - 1, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(current_cell[0] - 1, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(current_cell[0] - 1, current_cell[1]);
+                }
             }
-        }
-        if (current_cell[0] != n-1){ // can look right
-            if (wavefront_grid(current_cell[0] + 1, current_cell[1]) < lowest_value && 
-            wavefront_grid(current_cell[0] + 1, current_cell[1]) > 1){
-                lowest_value = wavefront_grid(current_cell[0] + 1, current_cell[1]);
-                lowest_cell = Eigen::Vector2i(current_cell[0] + 1, current_cell[1]);
+            if (current_cell[0] != n-1){ // can look right
+                if (wavefront_grid(current_cell[0] + 1, current_cell[1]) < lowest_value && 
+                wavefront_grid(current_cell[0] + 1, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(current_cell[0] + 1, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(current_cell[0] + 1, current_cell[1]);
+                }
             }
-        }
-        if (current_cell[1] != 0){ // can look down
-            if (wavefront_grid(current_cell[0], current_cell[1] - 1) < lowest_value && 
-            wavefront_grid(current_cell[0], current_cell[1] - 1) > 1){
-                lowest_value = wavefront_grid(current_cell[0], current_cell[1] - 1);
-                lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] - 1);
+            if (current_cell[1] != 0){ // can look down
+                if (wavefront_grid(current_cell[0], current_cell[1] - 1) < lowest_value && 
+                wavefront_grid(current_cell[0], current_cell[1] - 1) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], current_cell[1] - 1);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] - 1);
+                }
             }
-        }
-        if (current_cell[1] != m-1){ // can look up
-            if (wavefront_grid(current_cell[0], current_cell[1] + 1) < lowest_value && 
-            wavefront_grid(current_cell[0], current_cell[1] + 1) > 1){
-                lowest_value = wavefront_grid(current_cell[0], current_cell[1] + 1);
-                lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] + 1);
+            if (current_cell[1] != m-1){ // can look up
+                if (wavefront_grid(current_cell[0], current_cell[1] + 1) < lowest_value && 
+                wavefront_grid(current_cell[0], current_cell[1] + 1) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], current_cell[1] + 1);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] + 1);
+                }
             }
+        }else{// is a manipulator, can wrap around
+            if (current_cell[0] != 0){ // can look left
+                if (wavefront_grid(current_cell[0] - 1, current_cell[1]) < lowest_value && 
+                wavefront_grid(current_cell[0] - 1, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(current_cell[0] - 1, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(current_cell[0] - 1, current_cell[1]);
+                }
+            }else{
+                if (wavefront_grid(n - 1, current_cell[1]) < lowest_value && 
+                wavefront_grid(n - 1, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(n - 1, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(n - 1, current_cell[1]);
+                }
+            }
+            if (current_cell[0] != n-1){ // can look right
+                if (wavefront_grid(current_cell[0] + 1, current_cell[1]) < lowest_value && 
+                wavefront_grid(current_cell[0] + 1, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(current_cell[0] + 1, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(current_cell[0] + 1, current_cell[1]);
+                }
+            }else{
+                if (wavefront_grid(0, current_cell[1]) < lowest_value && 
+                wavefront_grid(0, current_cell[1]) > 1){
+                    lowest_value = wavefront_grid(0, current_cell[1]);
+                    lowest_cell = Eigen::Vector2i(0, current_cell[1]);
+                }
+            }
+            if (current_cell[1] != 0){ // can look down
+                if (wavefront_grid(current_cell[0], current_cell[1] - 1) < lowest_value && 
+                wavefront_grid(current_cell[0], current_cell[1] - 1) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], current_cell[1] - 1);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] - 1);
+                }
+            }else{
+                if (wavefront_grid(current_cell[0], m - 1) < lowest_value && 
+                wavefront_grid(current_cell[0], m - 1) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], m - 1);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], m - 1);
+                }
+            }
+            if (current_cell[1] != m-1){ // can look up
+                if (wavefront_grid(current_cell[0], current_cell[1] + 1) < lowest_value && 
+                wavefront_grid(current_cell[0], current_cell[1] + 1) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], current_cell[1] + 1);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], current_cell[1] + 1);
+                }
+            }else{
+                if (wavefront_grid(current_cell[0], 0) < lowest_value && 
+                wavefront_grid(current_cell[0], 0) > 1){
+                    lowest_value = wavefront_grid(current_cell[0], 0);
+                    lowest_cell = Eigen::Vector2i(current_cell[0], 0);
+                }
+            }
+
+
+
         }
 
         // move to that lowest cell. 
