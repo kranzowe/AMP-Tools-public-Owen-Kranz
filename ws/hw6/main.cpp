@@ -24,9 +24,18 @@ int main(int argc, char** argv) {
     std::shared_ptr<MyManipulatorCSConstructor> manipulator_ctor = std::make_shared<MyManipulatorCSConstructor>(n_cells);
     std::shared_ptr<WaveFrontAlgorithm> wf_algo = std::make_shared<MyWaveFrontAlgorithm>();
     
+    
     // Combine your wavefront planner with a cspace object (you do not need to modify these classes).
     PointWaveFrontAlgorithm point_algo(wf_algo, point_agent_ctor);
     ManipulatorWaveFrontAlgorithm manip_algo(wf_algo, manipulator_ctor);
+    
+    // some debugging
+    // MyManipulator2D link_manipulator_agent;
+    // amp::ManipulatorTrajectory2Link trajectory1;
+    // Problem2D prob1;
+    // bool success = HW6::generateAndCheck(manip_algo, link_manipulator_agent, trajectory1, prob1);
+    // Visualizer::makeFigure(prob1, link_manipulator_agent, trajectory1);
+
 
     // Return a path for the point-agent and manipulator using c-space planning.
     Path2D path = point_algo.plan(point_problem);

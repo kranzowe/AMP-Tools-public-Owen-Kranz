@@ -110,7 +110,7 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 my_ob.defineWithPoints(obstacle.verticesCCW());
                 my_obstacles.push_back(my_ob);
             };
-            amp::ManipulatorState init_state;
+            amp::ManipulatorState init_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
             bool found_valid_init = false;
             
             for (int attempts = 0; attempts < 1000 && !found_valid_init; attempts++) {
@@ -119,16 +119,18 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 bool collision = false;
                 
                 // check all links for collision
-                for (uint32_t i = 0; i < link_manipulator_agent.nLinks() && !collision; ++i) {
+                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+
                     Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
                     Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
-                    
-                    // Check this link segment against all obstacles
-                    for (const auto& ob : my_obstacles) {
-                        if (ob.collisionCheckAlongLine(joint_start, joint_end)) {
+
+                    for (const auto& ob : my_obstacles){
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
                             collision = true;
                             break;
-                        }
+                        }}
+                    if (collision){
+                        break;
                     }
                 }
                 
@@ -144,8 +146,7 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 init_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
             }
 
-
-            amp::ManipulatorState goal_state;
+            amp::ManipulatorState goal_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
             bool found_valid_goal = false;
             
             for (int attempts = 0; attempts < 1000 && !found_valid_goal; attempts++) {
@@ -153,15 +154,19 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 
                 bool collision = false;
                 
-                for (uint32_t i = 0; i < link_manipulator_agent.nLinks() && !collision; ++i) {
+                // check all links for collision
+                for (uint32_t i = 0; i <= link_manipulator_agent.nLinks()-1; ++i) {
+
                     Eigen::Vector2d joint_start = link_manipulator_agent.getJointLocation(test_state, i);
                     Eigen::Vector2d joint_end = link_manipulator_agent.getJointLocation(test_state, i + 1);
-                    
-                    for (const auto& ob : my_obstacles) {
-                        if (ob.collisionCheckAlongLine(joint_start, joint_end)) {
+
+                    for (const auto& ob : my_obstacles){
+                        if (ob.collisionCheckAlongLine(joint_start, joint_end)){
                             collision = true;
                             break;
-                        }
+                        }}
+                    if (collision){
+                        break;
                     }
                 }
                 
@@ -172,10 +177,11 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
                 }
             }
             
-            if (!found_valid_goal) {
+            if (!found_valid_init) {
                 std::cout << "could not find collision-free goal state" << std::endl;
-                goal_state = link_manipulator_agent.getConfigurationFromIK(problem.q_goal);
+                goal_state = link_manipulator_agent.getConfigurationFromIK(problem.q_init);
             }
+
 
             // Construct the grid cspace
             grid_cspace = m_cspace_constructor->construct(link_manipulator_agent, problem);

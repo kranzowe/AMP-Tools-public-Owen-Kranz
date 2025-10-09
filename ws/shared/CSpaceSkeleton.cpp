@@ -14,6 +14,11 @@ std::pair<std::size_t, std::size_t> MyGridCSpace2D::getCellFromPoint(double x0, 
     std::size_t x0_cells = grid_size.first;
     std::size_t x1_cells = grid_size.second;
 
+    while (x0 < x0_min) x0 += 2*M_PI;
+    while (x0 >= x0_max) x0 -= 2*M_PI;
+    while (x1 < x1_min) x1 += 2*M_PI;
+    while (x1 >= x1_max) x1 -= 2*M_PI;
+
     double delta_x0 = (x0_max - x0_min) / x0_cells;
     double delta_x1 = (x1_max - x1_min) / x1_cells;
 

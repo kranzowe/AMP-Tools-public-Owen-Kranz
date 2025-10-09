@@ -1,166 +1,121 @@
 #include "MyAStar.h"
+#include <queue>
+#include <unordered_map>
+#include <unordered_set>
 
-// Implement the search method for the A* algorithm
+struct AStarNode { // AI helped here. Was a major speed up to what I had
+    amp::Node node;
+    amp::Node parent;
+    double g_cost;
+    double f_cost;
+    
+    // for the priority queue to work right
+    bool operator>(const AStarNode& other) const {
+        return f_cost > other.f_cost; 
+    }
+};
+
 MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProblem& problem, const amp::SearchHeuristic& heuristic) {
     std::cout << "Starting A* Graph Search: Init --> goal | " << problem.init_node << " --> " << problem.goal_node << std::endl;
     GraphSearchResult result = {false, {}, 0.0}; // initialize the results object
 
-    std::vector<amp::Node> open_set;
-    std::vector<amp::Node> open_set_parents;
-    std::vector<double> open_set_weights;
-    std::vector<double> open_set_heuristics;
+    // way faster than vectors AI helped optimize this
+    std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> open_set;
     
+    // hash maps for super fast lookup instead of slow vector searching
+    // needed AI help for these
+    std::unordered_set<amp::Node> closed_set;
+    std::unordered_map<amp::Node, amp::Node> parents;
+    std::unordered_map<amp::Node, double> g_costs;
 
-    std::vector<amp::Node> closed_set;
-    std::vector<amp::Node> closed_set_parents;
-    std::vector<double> closed_set_weights;
-
-    // add first to open set
-
-    open_set.push_back(problem.init_node);
-    open_set_parents.push_back(problem.init_node); // technically has no parent
-    open_set_weights.push_back(0.0);
-    open_set_heuristics.push_back(heuristic(problem.init_node));
+    // add first node to open set
+    double init_h = heuristic(problem.init_node);
+    open_set.push({problem.init_node, problem.init_node, 0.0, init_h});
+    g_costs[problem.init_node] = 0.0;
 
     int attempts = 0;
 
-
-    while (true && attempts < 1e5){
+    while (!open_set.empty() && attempts < 1e5) {
         attempts++;
 
-        if (open_set.empty()){
-            std::cout<< "NO SOLUTION" << std::endl;
-            break;
-        }
-
-        // sort? nah i think finding the minimum will be easiest
-        std::vector<double> weight_plus_heuristics; // gotta combine weights and heuristic
-        for (size_t i = 0; i < open_set.size(); i++){
-            weight_plus_heuristics.push_back(open_set_weights[i] + open_set_heuristics[i]);
-        }
-
-        // ai helped here. No clue how to search for a min
-        auto min_val_it = std::min_element(weight_plus_heuristics.begin(), weight_plus_heuristics.end());
-        int min_index = std::distance(weight_plus_heuristics.begin(), min_val_it);
-
-        // pop this node from the list.
-        amp::Node current_node = open_set[min_index];
-        amp::Node current_parent = open_set_parents[min_index];
-        double current_weight = open_set_weights[min_index];
+        // get the best node automatically at top (AI help with these)
+        AStarNode current = open_set.top();
+        open_set.pop();
         
-        if (current_node == problem.goal_node){
-            //we made ittttt
-            // add to closed and break
-            // dont need the current heuristic cuz that wont go in the closed set
-
-            closed_set.push_back(current_node);
-            closed_set_weights.push_back(current_weight);
-            closed_set_parents.push_back(current_parent);
-            break;
+        // FIXED: check for outdated entries first, before doing anything else
+        if (g_costs.count(current.node) && current.g_cost > g_costs[current.node]) {
+            continue; // this is an outdated entry, skip it
         }
 
-        // remove from open list
-        open_set.erase(open_set.begin() + min_index);
-        open_set_heuristics.erase(open_set_heuristics.begin() + min_index);
-        open_set_parents.erase(open_set_parents.begin() + min_index);
-        open_set_weights.erase(open_set_weights.begin() + min_index);
-
-        //check if we aleady processed this node
-        bool already_processed = false;
-        for (size_t i = 0; i < closed_set.size(); i++){
-            if (closed_set[i] == current_node){
-                already_processed = true;
-                break;
-            }
-        }
-        if (already_processed) continue; // Skip if already processed
-
-        // dont need the current heuristic cuz that wont go in the closed set
-
-        //add to closed
-        closed_set.push_back(current_node);
-        closed_set_weights.push_back(current_weight);
-        closed_set_parents.push_back(current_parent);
-
-        // add all children to the open set
-        // needed ai for this next line cuz like what
-        std::vector<amp::Node> children = problem.graph->children(current_node);
-        std::vector<double> edge_weights = problem.graph->outgoingEdges(current_node);
-
-        for (size_t i = 0; i < children.size(); i++){
-
-            // add to the opem...
-            // gotta chekc if its in the open set already
-            bool is_in_open = false;
-            int index_of_duplicate_in_open;
-            for (size_t i = 0; i < open_set.size(); i++){
-                if (open_set[i] == children[i]){
-                is_in_open = true; 
-                index_of_duplicate_in_open = i;
-                }
-            }
-
-            if (!is_in_open){
+        // we made it to the goal!
+        if (current.node == problem.goal_node) {
+            result.success = true;
+            result.path_cost = current.g_cost;
             
-                open_set.push_back(children[i]);
-                open_set_weights.push_back(edge_weights[i] + current_weight);
-                open_set_parents.push_back(current_node); //current node is the parent 
-                open_set_heuristics.push_back(heuristic(children[i]));
-
-            } else{
-                // it is in.. gotta check if it improves cost
-                if (current_weight + edge_weights[i] < open_set_weights[index_of_duplicate_in_open]){
-                    // cost improved! erase dat duplicate!
-                    open_set.erase(open_set.begin() + index_of_duplicate_in_open);
-                    open_set_parents.erase(open_set_parents.begin() + index_of_duplicate_in_open);
-                    open_set_weights.erase(open_set_weights.begin() + index_of_duplicate_in_open);
-                    open_set_heuristics.erase(open_set_heuristics.begin() + index_of_duplicate_in_open);
-
-                    // now its erased, push the current
-                    open_set.push_back(children[i]);
-                    open_set_weights.push_back(edge_weights[i] + current_weight);
-                    open_set_parents.push_back(current_node); //current node is the parent 
-                    open_set_heuristics.push_back(heuristic(children[i]));
-                }
+            // trace back the path using the parents map
+            amp::Node trace_node = problem.goal_node;
+            while (trace_node != problem.init_node) {
+                result.node_path.push_back(trace_node);
+                trace_node = parents[trace_node];
             }
-        }
-
-        
-
-    }
-
-
-    // we made it! trace the parents back, adding the cost together
-
-    // luckily, the last node in the closed set is the goal
-
-    size_t current_index = closed_set.size() - 1;
-    result.path_cost = closed_set_weights[current_index];
-    attempts = 0;
-    while(closed_set[current_index] != problem.init_node && attempts <100){
-        attempts ++;
-        
-        // add current node
-        result.node_path.push_back(closed_set[current_index]);
-
-        amp::Node parent = closed_set_parents[current_index];
-
-        // ai helped here, no clue how to find an element in a list
-        auto parent_it = std::find(closed_set.begin(), closed_set.end(), parent);
-        if (parent_it != closed_set.end()) {
-            current_index = std::distance(closed_set.begin(), parent_it);
-        } else {
-            std::cout << "Error: Parent not found in closed set!" << std::endl;
+            result.node_path.push_back(problem.init_node);
+            std::reverse(result.node_path.begin(), result.node_path.end());
             break;
         }
+
+        // check if we already processed this node
+        if (closed_set.count(current.node)) continue; // skip if already done
+        
+        // add to closed set and record the parent
+        closed_set.insert(current.node);
+        parents[current.node] = current.parent;
+
+        // add all children to open set
+        std::vector<amp::Node> children = problem.graph->children(current.node);
+        std::vector<double> edge_weights = problem.graph->outgoingEdges(current.node);
+
+        for (size_t i = 0; i < children.size(); i++) {
+            amp::Node child = children[i];
+            
+            // skip if already processed
+            if (closed_set.count(child)) continue;
+            
+            double tentative_g = current.g_cost + edge_weights[i];
+            
+            // FIXED: simpler logic - just check if we found a better path
+            if (!g_costs.count(child) || tentative_g < g_costs[child]) {
+                // update the best known cost
+                g_costs[child] = tentative_g;
+                parents[child] = current.node;
+                
+                double h_cost = heuristic(child);
+                double f_cost = tentative_g + h_cost;
+                
+                // always add - duplicates will be filtered out when popped
+                open_set.push({child, current.node, tentative_g, f_cost});
+            }
+        }
+        
+        // MEMORY CLEANUP: periodically check queue size
+        if (attempts % 1000 == 0) {
+            std::cout << "A* iteration " << attempts << ", queue size: " << open_set.size() 
+                      << ", closed set: " << closed_set.size() << std::endl;
+        }
     }
 
-    // breaks before init gets added
-    result.node_path.push_back(problem.init_node);
-
-    std::reverse(result.node_path.begin(), result.node_path.end());
-
+    if (attempts >= 1e5) {
+        std::cout << "A* reached maximum iterations!" << std::endl;
+    }
     
+    if (!result.success) {
+        std::cout << "NO SOLUTION" << std::endl;
+    }
+
+    // CLEANUP: Clear data structures to free memory
+    while (!open_set.empty()) open_set.pop();
+    closed_set.clear();
+    parents.clear();
+    g_costs.clear();
 
     result.print();
     return result;
