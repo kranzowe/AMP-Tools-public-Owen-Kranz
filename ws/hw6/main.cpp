@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     // You will need your 2-link manipulator from HW4
     MyManipulator2D manipulator;
     Problem2D point_problem = HW2::getWorkspace1();
-    Problem2D manip_problem = HW6::getHW4Problem2();
+    Problem2D manip_problem = HW6::getHW4Problem3();
     
     // Construct point-agent and manipulator cspace instances.
     std::size_t n_cells = (point_problem.x_max - point_problem.x_min)*4;
@@ -43,14 +43,15 @@ int main(int argc, char** argv) {
     Visualizer::makeFigure(*point_algo.getCSpace(), path); // Visualize path in cspace
 
     ManipulatorTrajectory2Link trajectory = manip_algo.plan(manipulator, manip_problem);
+
     Visualizer::makeFigure(manip_problem, manipulator, trajectory);
     Visualizer::makeFigure(*manip_algo.getCSpace(), trajectory);
 
     // For Exercise 3, you will need to implement the A* algorithm.
-    ShortestPathProblem problem = HW6::getEx3SPP();
-    LookupSearchHeuristic heuristic = HW6::getEx3Heuristic();
-    MyAStarAlgo algo;
-    MyAStarAlgo::GraphSearchResult result = algo.search(problem, heuristic);
+    // ShortestPathProblem problem = HW6::getEx3SPP();
+    // LookupSearchHeuristic heuristic = HW6::getEx3Heuristic();
+    // MyAStarAlgo algo;
+    // MyAStarAlgo::GraphSearchResult result = algo.search(problem, heuristic);
 
     Visualizer::saveFigures(true, "hw6_figs");
 

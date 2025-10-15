@@ -89,7 +89,7 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
                 parents[child] = current.node;
                 
                 double h_cost = heuristic(child);
-                double f_cost = tentative_g + h_cost;
+                double f_cost = tentative_g; // + h_cost;
                 
                 // always add - duplicates will be filtered out when popped
                 open_set.push({child, current.node, tentative_g, f_cost});
@@ -109,9 +109,11 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
     
     if (!result.success) {
         std::cout << "NO SOLUTION" << std::endl;
+    } else{
+        std::cout << "Astar closed after: " << attempts <<" attempts"<< std::endl;
     }
 
-    // CLEANUP: Clear data structures to free memory
+    // CLEANUP: Clear data structures to free memory AI helped here
     while (!open_set.empty()) open_set.pop();
     closed_set.clear();
     parents.clear();
