@@ -101,16 +101,40 @@ class GenericRRT {
         std::map<amp::Node, Eigen::Vector2d> m_last_nodes;
 };
 
-// 2D PRM implementation using generic PRM
-class MyPRM : public amp::PRM2D, public GenericPRM {
+
+class MyPRM : public amp::PRM2D {
     public:
         MyPRM();
+        MyPRM(int num_samples, double connection_radius);
+        
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+        
+        std::shared_ptr<amp::Graph<double>> getLastGraph() const {
+            return m_generic_prm.getLastGraph();
+        }
+        
+        std::map<amp::Node, Eigen::Vector2d> getLastNodes() const {
+            return m_generic_prm.getLastNodes();
+        }
+        
+    private:
+        GenericPRM m_generic_prm;
 };
 
-// 2D RRT implementation using generic RRT
-class MyRRT : public amp::GoalBiasRRT2D, public GenericRRT {
+class MyRRT : public amp::GoalBiasRRT2D {
     public:
         MyRRT();
+        MyRRT(int max_iterations, double step_size, double goal_bias); // for passing in vals
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+        
+        std::shared_ptr<amp::Graph<double>> getLastGraph() const {
+            return m_generic_rrt.getLastGraph();
+        }
+        
+        std::map<amp::Node, Eigen::Vector2d> getLastNodes() const {
+            return m_generic_rrt.getLastNodes();
+        }
+        
+    private:
+        GenericRRT m_generic_rrt;
 };

@@ -201,6 +201,28 @@ amp::Path GenericPRM::plan(const Eigen::VectorXd& init_state,
         m_last_nodes[i] = Eigen::Vector2d(points[i][0], points[i][1]);
     }
 
+
+    bool smooth = false;
+
+    if (smooth){
+        for (int i = 0; i < 100; i++){
+            if (path.waypoints.size() <= 3) break; //checking if there even is a path
+            
+            std::uniform_int_distribution<size_t> dist1(0, path.waypoints.size()-3);
+            size_t index1 = dist1(gen);
+            
+            std::uniform_int_distribution<size_t> dist2(index1+2, path.waypoints.size()-1);
+            size_t index2 = dist2(gen);
+
+            //can connect?
+            if (!my_checker->edgeInCollision(path.waypoints[index1], path.waypoints[index2])){
+                // erase all inbetween
+                path.waypoints.erase(path.waypoints.begin() + index1 + 1, 
+                                path.waypoints.begin() + index2);
+            }
+        } 
+    }
+
     return path;
 }
 
@@ -284,35 +306,42 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
         }else{
             // need to just move it a bit by step
             Eigen::VectorXd unit_vec_dir = (random_point - nearest_point).normalized();
-            proposed_point = nearest_point += m_step_size * unit_vec_dir;
+            proposed_point = nearest_point + (m_step_size * unit_vec_dir);
         }
 
         // check collisionsss
-        if (!collision_checker.inCollision(proposed_point) && !my_checker->edgeInCollision(nearest_point, proposed_point)){
+        if (!collision_checker.inCollision(proposed_point)){
+
+            bool edge_collision = false;
+            if (my_checker) {
+                edge_collision = my_checker->edgeInCollision(nearest_point, proposed_point);
+            }
             
-            points.push_back(proposed_point);
-            amp::Node proposed_node_id = points.size() - 1;
+            if (!edge_collision) {
+            
+                points.push_back(proposed_point);
+                amp::Node proposed_node_id = points.size() - 1;
 
-            // calculate the correct edge weight first
-            double edge_weight = metric.distance(nearest_point, proposed_point);
-            edges.push_back({nearest_node_id, proposed_node_id, edge_weight}); 
+                // calculate the correct edge weight first
+                double edge_weight = metric.distance(nearest_point, proposed_point);
+                edges.push_back({nearest_node_id, proposed_node_id, edge_weight}); 
 
-            double dist_to_goal = metric.distance(proposed_point, goal_state);
-            if(dist_to_goal < 0.1){
-                // good enough for me
-                points.push_back(goal_state);
-                amp::Node goal_node_id = points.size() - 1;
-                
-                // Add edge from proposed_point to goal_state
-                double goal_edge_weight = metric.distance(proposed_point, goal_state);
-                edges.push_back({proposed_node_id, goal_node_id, goal_edge_weight}); 
+                double dist_to_goal = metric.distance(proposed_point, goal_state);
+                if(dist_to_goal < 0.1){
+                    // good enough for me
+                    points.push_back(goal_state);
+                    amp::Node goal_node_id = points.size() - 1;
+                    
+                    // Add edge from proposed_point to goal_state
+                    double goal_edge_weight = metric.distance(proposed_point, goal_state);
+                    edges.push_back({proposed_node_id, goal_node_id, goal_edge_weight}); 
 
-                break;
+                    break;
+                }
             }
         }
         samples++;
     }
-
 
     // now only for visualizations
     for (const auto& [from, to, weight] : edges) { // add to graph
@@ -357,46 +386,37 @@ std::shared_ptr<amp::Graph<double>> GenericRRT::getLastGraph() const {
 std::map<amp::Node, Eigen::Vector2d> GenericRRT::getLastNodes() const {
     return m_last_nodes;
 }
+MyPRM::MyPRM() : m_generic_prm(500, 2.0) {}
 
+MyPRM::MyPRM(int num_samples, double connection_radius) 
+    : m_generic_prm(num_samples, connection_radius) {}
 
-
-
-// 
-MyPRM::MyPRM() : GenericPRM(2000, 1.0) {}
-
-// MyPRM implementation
 amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
-    //create obs, no collision checker here
-    std::vector<MyObstacle> my_obstacles;
+    Eigen::VectorXd init_nd(2);
+    init_nd << problem.q_init.x(), problem.q_init.y();
+    
+    Eigen::VectorXd goal_nd(2);
+    goal_nd << problem.q_goal.x(), problem.q_goal.y();
+    
+    std::vector<MyObstacle> obstacles;
     for (const auto& obstacle : problem.obstacles) {
-        MyObstacle my_ob;
-        my_ob.defineWithPoints(obstacle.verticesCCW());
-        my_obstacles.push_back(my_ob);
+        MyObstacle obs;
+        obs.defineWithPoints(obstacle.verticesCCW());
+        obstacles.push_back(obs);
     }
-
-    // some AI help here cuz vectors are confuzing
+    
     std::vector<Eigen::VectorXd> env_vertices;
-    Eigen::VectorXd bottom_left(2), top_right(2);
-    bottom_left << problem.x_min, problem.y_min;
-    top_right << problem.x_max, problem.y_max;
-    env_vertices.push_back(bottom_left);
-    env_vertices.push_back(top_right);
-
-    // Create collision checker
-    MyPointCollisionChecker col_check(my_obstacles, env_vertices);
-
-    // distance metric def
+    env_vertices.push_back(Eigen::Vector2d(problem.x_min, problem.y_min));
+    env_vertices.push_back(Eigen::Vector2d(problem.x_max, problem.y_min));
+    env_vertices.push_back(Eigen::Vector2d(problem.x_max, problem.y_max));
+    env_vertices.push_back(Eigen::Vector2d(problem.x_min, problem.y_max));
+    
+    MyPointCollisionChecker col_check(obstacles, env_vertices);
     L2Distance metric;
     
-    // convert 2D points to N-D vectors. Needed AI help here
-    Eigen::VectorXd init_nd(2), goal_nd(2);
-    init_nd << problem.q_init[0], problem.q_init[1];
-    goal_nd << problem.q_goal[0], problem.q_goal[1];
+    amp::Path path_nd = m_generic_prm.plan(init_nd, goal_nd, col_check, metric);
     
-    // Call generic planner
-    amp::Path path_nd = GenericPRM::plan(init_nd, goal_nd, col_check, metric);
-    
-    // Convert N-D path back to 2D path // AI helped here as well
+    //  back to 2D
     amp::Path2D path_2d;
     for (const auto& waypoint : path_nd.waypoints) {
         path_2d.waypoints.push_back(Eigen::Vector2d(waypoint[0], waypoint[1]));
@@ -405,10 +425,12 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
     return path_2d;
 }
 
-// MyRRT constructor
-MyRRT::MyRRT() : GenericRRT(3000, 0.5, 0.1) {}
+//for testing
+MyRRT::MyRRT() : m_generic_rrt(3000, 0.5, 0.1) {}
 
-// MyRRT implementation
+MyRRT::MyRRT(int max_iterations, double step_size, double goal_bias) 
+    : m_generic_rrt(max_iterations, step_size, goal_bias) {}
+
 amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
     //create obs, no collision checker here
     std::vector<MyObstacle> my_obstacles;
@@ -426,7 +448,7 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
     env_vertices.push_back(bottom_left);
     env_vertices.push_back(top_right);
 
-    // Create collision checker
+    //ollision checker
     MyPointCollisionChecker col_check(my_obstacles, env_vertices);
 
     // distance metric def
@@ -437,8 +459,7 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
     init_nd << problem.q_init[0], problem.q_init[1];
     goal_nd << problem.q_goal[0], problem.q_goal[1];
     
-    // Fixed: Call generic planner with collision checker
-    amp::Path path_nd = GenericRRT::plan(init_nd, goal_nd, col_check, metric);
+    amp::Path path_nd = m_generic_rrt.plan(init_nd, goal_nd, col_check, metric);
     
     // Convert N-D path back to 2D path // AI helped here as well
     amp::Path2D path_2d;
