@@ -7,31 +7,50 @@
 using namespace amp;
 
 int main(int argc, char** argv) {
-    HW7::hint(); // Consider implementing an N-dimensional planner 
+    //HW7::hint(); // Consider implementing an N-dimensional planner 
 
-    // Example of creating a graph and adding nodes for visualization
-    std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
-    std::map<amp::Node, Eigen::Vector2d> nodes;
+    // // Test PRM on Workspace1 of HW2
+    // Problem2D problem = HW2::getWorkspace2();
+    // MyPRM prm;
+    // Path2D prm_path = prm.plan(problem);
     
-    std::vector<Eigen::Vector2d> points = {{3, 3}, {4, 5}, {5, 3}, {6, 5}, {5, 7}, {7, 3}}; // Points to add to the graph
-    for (amp::Node i = 0; i < points.size(); ++i) nodes[i] = points[i]; // Add point-index pair to the map
-    std::vector<std::tuple<amp::Node, amp::Node, double>> edges = {{0, 4, 1}, {0, 5, 1}, {4, 5, 1}, {1, 2, 1}, {1, 3, 1}, {2, 3, 1}}; // Edges to connect
-    for (const auto& [from, to, weight] : edges) graphPtr->connect(from, to, weight); // Connect the edges in the graph
-    graphPtr->print();
+    // // Get PRM visualization data
+    // auto prm_graph = prm.getLastGraph();
+    // auto prm_nodes = prm.getLastNodes();
+    
+    // // Visualize PRM results
+    // Visualizer::makeFigure(problem, prm_path, *prm_graph, prm_nodes);
 
-    // Test PRM on Workspace1 of HW2
+
     Problem2D problem = HW2::getWorkspace1();
-    MyPRM prm;
-    Visualizer::makeFigure(problem, prm.plan(problem), *graphPtr, nodes);
-
-    // Generate a random problem and test RRT
     MyRRT rrt;
-    Path2D path;
-    HW7::generateAndCheck(rrt, path, problem);
-    Visualizer::makeFigure(problem, path, *graphPtr, nodes);
+    Path2D rrt_path = rrt.plan(problem);
+    
+    // Get PRM visualization data
+    auto rrt_graph = rrt.getLastGraph();
+    auto rrt_nodes = rrt.getLastNodes();
+    
+    // Visualize PRM results
+    Visualizer::makeFigure(problem, rrt_path, *rrt_graph, rrt_nodes);
+
+    // // Generate a random problem and test RRT
+    // MyRRT rrt;
+    // Path2D rrt_path;
+    // HW7::generateAndCheck(rrt, rrt_path, problem);
+    
+    // Create separate visualization for RRT (you can implement similar for RRT later)
+    // std::shared_ptr<amp::Graph<double>> rrt_graphPtr = std::make_shared<amp::Graph<double>>();
+    // std::map<amp::Node, Eigen::Vector2d> rrt_nodes;
+    
+    // For now, just visualize the path points
+    // for (amp::Node i = 0; i < rrt_path.waypoints.size(); ++i) {
+    //     rrt_nodes[i] = rrt_path.waypoints[i];
+    // }
+    
+    // Visualizer::makeFigure(problem, rrt_path, *rrt_graphPtr, rrt_nodes);
     Visualizer::saveFigures(true, "hw7_figs");
 
     // Grade method
-    HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    // HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }

@@ -4,7 +4,7 @@
 #include "AMPCore.h"
 
 // Include the correct homework headers
-#include "hw/HW6.h"
+// #include "hw/HW6.h"
 
 class MyAStarAlgo : public amp::AStar {
     public:

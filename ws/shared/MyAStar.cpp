@@ -1,4 +1,5 @@
 #include "MyAStar.h"
+#include "AMPCore.h"
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -119,6 +120,6 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
     parents.clear();
     g_costs.clear();
 
-    result.print();
+    //result.print();
     return result;
 }
