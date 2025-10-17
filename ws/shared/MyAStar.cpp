@@ -17,7 +17,7 @@ struct AStarNode { // AI helped here. Was a major speed up to what I had
 };
 
 MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProblem& problem, const amp::SearchHeuristic& heuristic) {
-    std::cout << "Starting A* Graph Search: Init --> goal | " << problem.init_node << " --> " << problem.goal_node << std::endl;
+    // std::cout << "Starting A* Graph Search: Init --> goal | " << problem.init_node << " --> " << problem.goal_node << std::endl;
     GraphSearchResult result = {false, {}, 0.0}; // initialize the results object
 
     // way faster than vectors AI helped optimize this
@@ -97,22 +97,18 @@ MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProble
             }
         }
         
-        // MEMORY CLEANUP: periodically check queue size
-        if (attempts % 1000 == 0) {
-            std::cout << "A* iteration " << attempts << ", queue size: " << open_set.size() 
-                      << ", closed set: " << closed_set.size() << std::endl;
-        }
+ 
     }
 
     if (attempts >= 1e5) {
         std::cout << "A* reached maximum iterations!" << std::endl;
     }
     
-    if (!result.success) {
-        std::cout << "NO SOLUTION" << std::endl;
-    } else{
-        std::cout << "Astar closed after: " << attempts <<" attempts"<< std::endl;
-    }
+    // if (!result.success) {
+    //     // std::cout << "NO SOLUTION" << std::endl;
+    // } else{
+    //     // std::cout << "Astar closed after: " << attempts <<" attempts"<< std::endl;
+    // }
 
     // CLEANUP: Clear data structures to free memory AI helped here
     while (!open_set.empty()) open_set.pop();

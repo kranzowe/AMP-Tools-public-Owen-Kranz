@@ -158,7 +158,7 @@ amp::Path GenericPRM::plan(const Eigen::VectorXd& init_state,
         double dist = metric.distance(goal_state, points[node_id]);
         if (dist < m_connection_radius){
 
-            if (!my_checker->edgeInCollision(init_state, points[node_id])){
+            if (!my_checker->edgeInCollision(goal_state, points[node_id])){
                 edges.push_back({1, node_id, dist});
                 edges.push_back({node_id, 1, dist});
             }
@@ -334,13 +334,13 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
     }
 
     amp::Node current_node_id = points.size() - 1; // goal is last
-    std::cout << "current id:" << current_node_id << std::endl;
+    // std::cout << "current id:" << current_node_id << std::endl;
     while (current_node_id != 0) {
         path.waypoints.push_back(points[current_node_id]);
 
-        std::cout << "added:" <<points[current_node_id] << std::endl;
+        // std::cout << "added:" <<points[current_node_id] << std::endl;
         current_node_id = parent_map[current_node_id]; // parent from map
-        std::cout << "current id:" << current_node_id << std::endl;
+        // std::cout << "current id:" << current_node_id << std::endl;
 
     }
     path.waypoints.push_back(init_state);
@@ -362,7 +362,7 @@ std::map<amp::Node, Eigen::Vector2d> GenericRRT::getLastNodes() const {
 
 
 // 
-MyPRM::MyPRM() : GenericPRM(1000, 2.0) {}
+MyPRM::MyPRM() : GenericPRM(2000, 1.0) {}
 
 // MyPRM implementation
 amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
@@ -406,7 +406,7 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
 }
 
 // MyRRT constructor
-MyRRT::MyRRT() : GenericRRT(1000, 0.5, 0.1) {}
+MyRRT::MyRRT() : GenericRRT(3000, 0.5, 0.1) {}
 
 // MyRRT implementation
 amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {

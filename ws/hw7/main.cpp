@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     //HW7::hint(); // Consider implementing an N-dimensional planner 
 
     // // Test PRM on Workspace1 of HW2
-    // Problem2D problem = HW2::getWorkspace2();
+    // Problem2D problem = HW2::getWorkspace1();
     // MyPRM prm;
     // Path2D prm_path = prm.plan(problem);
     
@@ -22,21 +22,29 @@ int main(int argc, char** argv) {
     // Visualizer::makeFigure(problem, prm_path, *prm_graph, prm_nodes);
 
 
-    Problem2D problem = HW2::getWorkspace1();
-    MyRRT rrt;
-    Path2D rrt_path = rrt.plan(problem);
+    // // Problem2D problem1 = HW2::getWorkspace1();
+    // MyRRT rrt;
+    // Path2D rrt_path = rrt.plan(problem1);
+
+    // bool result = HW7::check(rrt_path, problem1);
     
-    // Get PRM visualization data
-    auto rrt_graph = rrt.getLastGraph();
-    auto rrt_nodes = rrt.getLastNodes();
+    // // Get PRM visualization data
+    // auto rrt_graph = rrt.getLastGraph();
+    // auto rrt_nodes = rrt.getLastNodes();
     
-    // Visualize PRM results
-    Visualizer::makeFigure(problem, rrt_path, *rrt_graph, rrt_nodes);
+    // // Visualize PRM results
+    // Visualizer::makeFigure(problem1, rrt_path, *rrt_graph, rrt_nodes);
 
     // // Generate a random problem and test RRT
-    // MyRRT rrt;
-    // Path2D rrt_path;
-    // HW7::generateAndCheck(rrt, rrt_path, problem);
+    Problem2D problem2d;
+    MyRRT rrt;
+    Path2D rrt_path;
+    HW7::generateAndCheck(rrt, rrt_path, problem2d);
+
+    auto rrt_graph = rrt.getLastGraph();
+    auto rrt_nodes = rrt.getLastNodes();
+
+    Visualizer::makeFigure(problem2d, rrt_path, *rrt_graph, rrt_nodes);
     
     // Create separate visualization for RRT (you can implement similar for RRT later)
     // std::shared_ptr<amp::Graph<double>> rrt_graphPtr = std::make_shared<amp::Graph<double>>();
@@ -51,6 +59,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw7_figs");
 
     // Grade method
-    // HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    //HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }
