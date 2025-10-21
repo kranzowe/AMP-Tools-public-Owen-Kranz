@@ -17,3 +17,13 @@ double LinearPrimative::evaluatePoint(Eigen::Vector2d q) const{
     return a*q[0] + b*q[1] + c;
 
 }
+
+double MovingCircularPrimative::evaluatePoint(Eigen::Vector2d q, Eigen::Vector2d center) const{
+
+    double val = ((q[0] - center[0])*(q[0] - center[0])) + ((q[1] - center[1])*(q[1] - center[1])) - (radius*radius);
+    
+    // so by my convention, all points to the left of the vector 
+    // point a to point b are negative. therefore I define polygons cCW using vertices
+    return val
+
+}

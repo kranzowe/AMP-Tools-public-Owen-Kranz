@@ -15,6 +15,18 @@ bool MyObstacle::collisionCheck(Eigen::Vector2d q) const {
     return true;
 }
 
+bool MyObstacle::collisionCheckTranslated(Eigen::Vector2d q, Eigen::Vector2d center) const {
+
+    // loop thru da primatives, if we find all are 0 or negative, COLLISIOONNNNN :o
+    for (const auto& primative : moving_circular_primatives){
+        if (primative.evaluatePoint(q, center) > 1e-8) { // using some smol number for floating point
+            return false;
+        }
+    }
+    // everything <= 0
+    return true;
+}
+
 bool MyObstacle::collisionCheckAlongLine(Eigen::Vector2d q_start, Eigen::Vector2d q_end) const {
 
     double delta_gamma = 0.01;
@@ -59,6 +71,16 @@ void MyObstacle::defineWithPoints(const std::vector<Eigen::Vector2d>& vertices_i
         primatives.push_back(prim);
     }
 }
+
+
+void MyObstacle::defineWithDiscRadius(const double radius) {
+
+    MovingCircularPrimative prim;
+
+    moving_circular_primatives.push_back(prim);
+    
+}
+
 
 std::pair<double, Eigen::Vector2d> MyObstacle::closestDistanceToq(Eigen::Vector2d q) const {
 

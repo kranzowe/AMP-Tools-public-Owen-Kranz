@@ -327,7 +327,7 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
                 edges.push_back({nearest_node_id, proposed_node_id, edge_weight}); 
 
                 double dist_to_goal = metric.distance(proposed_point, goal_state);
-                if(dist_to_goal < 0.1){
+                if(dist_to_goal < 0.25){
                     // good enough for me
                     points.push_back(goal_state);
                     amp::Node goal_node_id = points.size() - 1;
@@ -386,7 +386,7 @@ std::shared_ptr<amp::Graph<double>> GenericRRT::getLastGraph() const {
 std::map<amp::Node, Eigen::Vector2d> GenericRRT::getLastNodes() const {
     return m_last_nodes;
 }
-MyPRM::MyPRM() : m_generic_prm(500, 2.0) {}
+MyPRM::MyPRM() : m_generic_prm(200, 2.0) {}
 
 MyPRM::MyPRM(int num_samples, double connection_radius) 
     : m_generic_prm(num_samples, connection_radius) {}
@@ -426,7 +426,7 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
 }
 
 //for testing
-MyRRT::MyRRT() : m_generic_rrt(3000, 0.5, 0.1) {}
+MyRRT::MyRRT() : m_generic_rrt(5000, 0.5, 0.05) {}
 
 MyRRT::MyRRT(int max_iterations, double step_size, double goal_bias) 
     : m_generic_rrt(max_iterations, step_size, goal_bias) {}

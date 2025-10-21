@@ -2,6 +2,7 @@
 #include "AMPCore.h"
 #include "hw/HW2.h"
 #include "hw/HW5.h"
+#include "hw/HW4.h"
 #include "MySamplingBasedPlanners.h"
 
 #include <chrono>
@@ -12,10 +13,18 @@ using namespace amp;
 int main(int argc, char** argv) {
     //HW7::hint(); // Consider implementing an N-dimensional planner 
 
-    Problem2D problem = HW5::getWorkspace1();
-    problem.y_max = 3.0;
-    problem.y_min = -3.0;
+    Problem2D problem = HW2::getWorkspace2();
+    // problem.y_max = 3.0;
+    // problem.y_min = -3.0;
     MyPRM prm;
+
+    Path2D prm_path = prm.plan(problem);
+    auto prm_graph = prm.getLastGraph();
+    auto prm_nodes = prm.getLastNodes();
+    // LOG("path length: " << prm_path.length());
+    
+    // Visualize PRM results
+    Visualizer::makeFigure(problem, prm_path, *prm_graph, prm_nodes);
     
     std::vector<std::pair<int, double>> prm_settings = {
         {200, 0.5}, {200, 1.0}, {200, 1.5}, {200, 2.0},
@@ -99,6 +108,94 @@ int main(int argc, char** argv) {
                            "PRM Success Count", 
                            "PRM Settings (samples, radius)", 
                            "Number of Successes (out of 100)");
+    
+    // std::vector<std::pair<std::string, Problem2D>> rrt_workspaces = {
+    //     {"HW5-WS1", HW5::getWorkspace1()},
+    //     {"HW2-WS1", HW2::getWorkspace1()},
+    //     {"HW2-WS2", HW2::getWorkspace2()}
+    // };
+    
+    // std::list<std::vector<double>> rrt_runtime_data;
+    // std::list<std::vector<double>> rrt_path_length_data;
+    // std::list<std::vector<double>> rrt_success_data;
+    // std::vector<std::string> rrt_workspace_labels;
+    
+    // for (const auto& workspace : rrt_workspaces) {
+    //     std::string workspace_name = workspace.first;
+    //     Problem2D workspace_problem = workspace.second;
+        
+    //     std::cout << "Testing RRT on " << workspace_name << "..." << std::endl;
+        
+    //     MyRRT rrt; // Use default RRT parameters
+        
+    //     std::vector<double> rrt_runtimes;
+    //     std::vector<double> rrt_path_lengths;
+    //     int rrt_failure_count = 0;
+        
+    //     for(int i = 0; i < 100; i++){
+    //         auto start = std::chrono::high_resolution_clock::now();
+    //         Path2D rrt_path = rrt.plan(workspace_problem);
+    //         auto end = std::chrono::high_resolution_clock::now();
+            
+    //         bool result = HW7::check(rrt_path, workspace_problem);
+    //         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            
+    //         rrt_runtimes.push_back(duration.count() / 1000.0);
+            
+    //         if (result) {
+    //             rrt_path_lengths.push_back(rrt_path.length());
+    //             std::cout << workspace_name << " Trial " << i+1 << "/100: Success - " 
+    //                       << duration.count()/1000.0 << " ms, length: " 
+    //                       << rrt_path.length() << std::endl;
+    //         } else {
+    //             rrt_failure_count++;
+    //             std::cout << workspace_name << " Trial " << i+1 << "/100: Failed - " 
+    //                       << duration.count()/1000.0 << " ms" << std::endl;
+    //         }
+    //     }
+        
+    //     rrt_runtime_data.push_back(rrt_runtimes);
+        
+    //     std::vector<double> rrt_successful_lengths;
+    //     for (double length : rrt_path_lengths) {
+    //         if (length > 0) {
+    //             rrt_successful_lengths.push_back(length);
+    //         }
+    //     }
+    //     rrt_path_length_data.push_back(rrt_successful_lengths);
+        
+    //     rrt_success_data.push_back(std::vector<double>{static_cast<double>(100 - rrt_failure_count)});
+        
+    //     rrt_workspace_labels.push_back(workspace_name);
+        
+    //     int rrt_successful_runs = rrt_successful_lengths.size();
+    //     double rrt_success_rate = (double)rrt_successful_runs / 100.0 * 100.0;
+    //     std::cout << "RRT on " << workspace_name << ": " << rrt_successful_runs 
+    //               << "/100 successful (" << rrt_success_rate << "%)" << std::endl << std::endl;
+        
+    //     if (rrt_successful_runs > 0) {
+    //         Path2D sample_path = rrt.plan(workspace_problem);
+    //         auto rrt_graph = rrt.getLastGraph();
+    //         auto rrt_nodes = rrt.getLastNodes();
+    //         Visualizer::makeFigure(workspace_problem, sample_path, *rrt_graph, rrt_nodes);
+    //     }
+    // }
+    
+    // Visualizer::makeBoxPlot(rrt_runtime_data, rrt_workspace_labels, 
+    //                        "RRT Runtime Performance by Workspace", 
+    //                        "Workspace", 
+    //                        "Runtime (ms)");
+    
+    // Visualizer::makeBoxPlot(rrt_path_length_data, rrt_workspace_labels, 
+    //                        "RRT Path Length Performance by Workspace", 
+    //                        "Workspace", 
+    //                        "Path Length");
+    
+    // Visualizer::makeBoxPlot(rrt_success_data, rrt_workspace_labels, 
+    //                        "RRT Success Count by Workspace", 
+    //                        "Workspace", 
+    //                        "Number of Successes (out of 100)");
+
 
     // // Get PRM visualization data
     // Path2D prm_path = prm.plan(problem);
@@ -132,6 +229,7 @@ int main(int argc, char** argv) {
     // // Generate a random problem and test RRT
     // Problem2D problem2d;
     // MyRRT rrt;
+    // MyPRM prm;
     // Path2D rrt_path;
     // HW7::generateAndCheck(rrt, rrt_path, problem2d);
 
@@ -153,6 +251,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw7_figs");
 
     // Grade method
-    // HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    // HW7::grade<MyPRM, MyRRT>("owen.kranz@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }

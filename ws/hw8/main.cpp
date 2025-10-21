@@ -31,14 +31,14 @@ int main(int argc, char** argv) {
     bool isValid = HW8::check(path, problem, collision_states);
     Visualizer::makeFigure(problem, path, collision_states);
 
-    // Solve using a decentralized approach
-    MyDecentralPlanner decentral_planner;
-    collision_states = {{}};
-    HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
-    Visualizer::makeFigure(problem, path, collision_states);
+    // // Solve using a decentralized approach
+    // MyDecentralPlanner decentral_planner;
+    // collision_states = {{}};
+    // HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
+    // Visualizer::makeFigure(problem, path, collision_states);
 
-    // Visualize and grade methods
-    Visualizer::showFigures(true, "hw8_figs");
-    HW8::grade<MyCentralPlanner, MyDecentralPlanner>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    // // Visualize and grade methods
+    // Visualizer::showFigures(true, "hw8_figs");
+    // HW8::grade<MyCentralPlanner, MyDecentralPlanner>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }

@@ -10,4 +10,14 @@ class LinearPrimative {
         double evaluatePoint(Eigen::Vector2d) const;
 };
 
+class MovingCircularPrimative {
+
+    public:
+        double radius = 0.0; // radius
+
+        double evaluatePoint(Eigen::Vector2d q, Eigen::Vector2d center) const;
+};
+
+
+
 #endif
