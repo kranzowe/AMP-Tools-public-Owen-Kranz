@@ -24,6 +24,6 @@ double MovingCircularPrimative::evaluatePoint(Eigen::Vector2d q, Eigen::Vector2d
     
     // so by my convention, all points to the left of the vector 
     // point a to point b are negative. therefore I define polygons cCW using vertices
-    return val
+    return val;
 
 }

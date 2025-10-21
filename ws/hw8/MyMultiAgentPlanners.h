@@ -22,9 +22,7 @@ class MyPointAndDiscCollisionChecker : public MyPointCollisionChecker {
         bool edgeInCollision(const Eigen::VectorXd& config1, const Eigen::VectorXd& config2) const;
     
     private:
-        const std::vector<MyObstacle>& m_obstacles;
         const std::vector<MyObstacle>& m_moving_circular_obstacles;
-        const std::vector<Eigen::VectorXd>& m_env_vertices;
 };
 
 

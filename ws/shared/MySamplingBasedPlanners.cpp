@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <queue>
 #include "AMPCore.h"
-#include <MyAStar.h>
+#include "MyAStar.h"
 #include "MyObstacle.h"
 
 // NOTE on AI Use, I used AI to help structure the new header and .cpp file to match

@@ -9,7 +9,7 @@ class MyObstacle {
         // vector holding my linear primatives
         std::vector<Eigen::Vector2d> vertices;
         std::vector<LinearPrimative> primatives;
-        std::vector<MovingCircularPrimative> moving_circular_primatives;
+        MovingCircularPrimative moving_circular_primative;
 
         bool collisionCheck(Eigen::Vector2d) const;
         bool collisionCheckTranslated(Eigen::Vector2d q, Eigen::Vector2d center) const;
