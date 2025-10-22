@@ -61,6 +61,90 @@ bool MyPointCollisionChecker::edgeInCollision(const Eigen::VectorXd& config1, co
     return false;
 }
 
+
+/////// New collision checks /////////////////////////////
+
+// a new collision check for the robo and obstacles
+MyPointAndDiscCollisionChecker::MyPointAndDiscCollisionChecker(const std::vector<MyObstacle>& obstacles, 
+                                                 const std::vector<MyObstacle>& moving_circular_obstacles,
+                                                 const std::vector<Eigen::VectorXd>& env_vertices)
+    : MyPointCollisionChecker(obstacles, env_vertices),
+     m_moving_circular_obstacles(moving_circular_obstacles) {
+}
+
+// for all obs checks for collsiiosn
+bool MyPointAndDiscCollisionChecker::inCollision(const Eigen::VectorXd& config) const {
+    
+    std::vector<Eigen::Vector2d> disc_centers;
+    std::vector<Eigen::Vector2d> points_to_check;
+
+    int num_samples = 16;
+
+    // this 2 is becaseu i know the config of one robot is 2. kinda gross
+    for (size_t i = 0; 2*i < config.size(); i++){
+        Eigen::Vector2d point{config[2*i], config[(2*i) + 1]};
+        disc_centers.push_back(point);
+
+        for (double theta = 0; theta < 2*M_PI; theta += 2*M_PI/(num_samples)){
+            //sample 16 points on each robot edge.
+            Eigen::Vector2d outer_point{point[0] + (cos(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius*1.1), 
+                                        point[1] + (sin(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius*1.1)};
+
+            points_to_check.push_back(outer_point);
+
+            
+        }
+    }
+
+    for (auto point : points_to_check){
+        // check for collisions with obstacels
+        for (const auto& obstacle : m_obstacles) {
+            if (obstacle.collisionCheck(point)) {
+                return true;
+            }
+        }
+    }
+
+    for (size_t i = 0; 2*i < config.size(); i++){
+        std::vector<Eigen::Vector2d> points_to_check_minus_current;
+
+        // pushback only takes one so gotta use insert(at end or begining, what to insert, end of insert)
+        points_to_check_minus_current.insert(points_to_check_minus_current.end(),
+                                     points_to_check.begin(), 
+                                     points_to_check.begin() + (i*num_samples));
+
+
+        points_to_check_minus_current.insert(points_to_check_minus_current.end(),
+                                            points_to_check.begin() + (i*num_samples) + num_samples, 
+                                            points_to_check.end());
+        // LOG("JUST SLICED 0 to " << i*num_samples);
+        // LOG("and  SLICED " << (i*num_samples) + num_samples << " to end");
+        for (auto point : points_to_check_minus_current){
+            // check for collisions with other robits
+            // ooo gotta be sneaky here. Dont want to check collision with self.
+            if (m_moving_circular_obstacles[i].collisionCheckTranslated(point, disc_centers[i])) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool MyPointAndDiscCollisionChecker::edgeInCollision(const Eigen::VectorXd& config1, const Eigen::VectorXd& config2) const{
+    // checks along ray connecting two configs
+    uint16_t divs = 50;
+    for (size_t i = 0; i <= divs; i++) {
+        double t = static_cast<double>(i) / divs;
+        Eigen::VectorXd interpolated_config = (1.0 - t) * config1 + t * config2;
+        if (inCollision(interpolated_config)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 // n dim
 GenericPRM::GenericPRM(int num_samples, double connection_radius) 
     : m_num_samples(num_samples), m_connection_radius(connection_radius) {}
@@ -244,8 +328,6 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
                            const amp::ConfigurationSpace& collision_checker,
                            const DistanceMetric& metric) {
     
-                            // Needed AI help to Cast so that it would use the custom function
-    const MyPointCollisionChecker* my_checker = dynamic_cast<const MyPointCollisionChecker*>(&collision_checker);
     
     // bounds for generating random samples 
     Eigen::VectorXd min_vector = collision_checker.lowerBounds();
@@ -315,7 +397,8 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
         }
 
         // LOG("PROPOSED " << proposed_point);
-
+        const MyPointAndDiscCollisionChecker* my_checker = dynamic_cast<const MyPointAndDiscCollisionChecker*>(&collision_checker);
+        
 
         // check collisionsss
         if (!collision_checker.inCollision(proposed_point)){
@@ -324,6 +407,8 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
             bool edge_collision = false;
             if (my_checker) {
                 edge_collision = my_checker->edgeInCollision(nearest_point, proposed_point);
+            }else{
+                LOG("CAST ERRRORRR");
             }
             
             if (!edge_collision) {

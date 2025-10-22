@@ -11,6 +11,8 @@
 // NOTE on AI Use, I used AI to help structure the new header and .cpp file to match
 // the given hint
 
+
+
 class DistanceMetric {
     public:
         virtual double distance(const Eigen::VectorXd& vec1, const Eigen::VectorXd& vec2) const = 0;
@@ -31,7 +33,7 @@ class MyPointCollisionChecker : public amp::ConfigurationSpace {
                                const std::vector<Eigen::VectorXd>& env_vertices);
         
         virtual bool inCollision(const Eigen::VectorXd& config) const override;
-        bool edgeInCollision(const Eigen::VectorXd& config1, const Eigen::VectorXd& config2) const;
+        virtual bool edgeInCollision(const Eigen::VectorXd& config1, const Eigen::VectorXd& config2) const;
         
         // Remove override since getBounds() is not in the base class
         std::pair<Eigen::VectorXd, Eigen::VectorXd> getBounds() const;
@@ -43,6 +45,21 @@ class MyPointCollisionChecker : public amp::ConfigurationSpace {
         const std::vector<MyObstacle>& m_obstacles;
         const std::vector<Eigen::VectorXd>& m_env_vertices;
 };
+
+
+class MyPointAndDiscCollisionChecker : public MyPointCollisionChecker {
+    public:
+        MyPointAndDiscCollisionChecker(const std::vector<MyObstacle>& obstacles,
+                                const std::vector<MyObstacle>& moving_circular_obstacles,
+                                const std::vector<Eigen::VectorXd>& env_vertices);
+        
+        virtual bool inCollision(const Eigen::VectorXd& config) const override;
+        virtual bool edgeInCollision(const Eigen::VectorXd& config1, const Eigen::VectorXd& config2) const override;
+    
+    private:
+        const std::vector<MyObstacle>& m_moving_circular_obstacles;
+};
+
 
 // Fixed: Renamed and properly inherit from amp::SearchHeuristic
 struct MyLookupSearchHeuristic : public amp::SearchHeuristic {
