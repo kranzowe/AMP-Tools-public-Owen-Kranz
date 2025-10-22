@@ -59,7 +59,7 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
     L2Distance metric;
 
     //GenericRRT RRT(int max_iterations = 5000, double step_size = 0.5, double goal_bias = 0.1);
-    GenericRRT RRT(5000, 0.5, 0.1);
+    GenericRRT RRT(7500, 0.5, 0.05);
 
     amp::Path path_rrt;
 

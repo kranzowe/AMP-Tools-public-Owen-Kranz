@@ -75,6 +75,8 @@ void MyObstacle::defineWithDiscRadius(const double radius) {
 
     MovingCircularPrimative prim;
 
+    prim.radius = radius;
+
     moving_circular_primative = prim;
     
 }
