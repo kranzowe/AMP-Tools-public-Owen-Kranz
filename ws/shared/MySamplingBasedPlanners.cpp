@@ -249,7 +249,9 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
     
     // bounds for generating random samples 
     Eigen::VectorXd min_vector = collision_checker.lowerBounds();
+    //LOG("MIN vec " << min_vector);
     Eigen::VectorXd max_vector = collision_checker.upperBounds();
+    //LOG("Max vec " << max_vector);
     
     std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
     
@@ -281,7 +283,8 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
                 random_point[i] = dist(gen);
             }
         }
-
+        
+        // LOG("Rando point" << random_point);
         // nearest neighbor
         double min_distance = 1e8;
         Eigen::VectorXd nearest_point(dim);
@@ -298,6 +301,8 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
             }
         }
 
+        // LOG("NEAREST " << nearest_point);
+
         Eigen::VectorXd proposed_point(dim);
 
         
@@ -309,8 +314,12 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
             proposed_point = nearest_point + (m_step_size * unit_vec_dir);
         }
 
+        // LOG("PROPOSED " << proposed_point);
+
+
         // check collisionsss
         if (!collision_checker.inCollision(proposed_point)){
+            // LOG("NO POINT COLL");
 
             bool edge_collision = false;
             if (my_checker) {
@@ -318,7 +327,7 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
             }
             
             if (!edge_collision) {
-            
+                // LOG("NO EDGE COLL");
                 points.push_back(proposed_point);
                 amp::Node proposed_node_id = points.size() - 1;
 
@@ -341,6 +350,7 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
             }
         }
         samples++;
+        // std::cin.get();
     }
 
     // now only for visualizations

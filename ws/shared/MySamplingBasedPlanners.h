@@ -39,7 +39,7 @@ class MyPointCollisionChecker : public amp::ConfigurationSpace {
         static Eigen::VectorXd calculateLowerBounds(const std::vector<Eigen::VectorXd>& env_vertices);
         static Eigen::VectorXd calculateUpperBounds(const std::vector<Eigen::VectorXd>& env_vertices);
     
-    private:
+    protected:
         const std::vector<MyObstacle>& m_obstacles;
         const std::vector<Eigen::VectorXd>& m_env_vertices;
 };
