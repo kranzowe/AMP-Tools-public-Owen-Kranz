@@ -40,6 +40,7 @@ class MyPointCollisionChecker : public amp::ConfigurationSpace {
         
         static Eigen::VectorXd calculateLowerBounds(const std::vector<Eigen::VectorXd>& env_vertices);
         static Eigen::VectorXd calculateUpperBounds(const std::vector<Eigen::VectorXd>& env_vertices);
+        
     
     protected:
         const std::vector<MyObstacle>& m_obstacles;
@@ -105,10 +106,17 @@ class GenericRRT {
                        const amp::ConfigurationSpace& collision_checker,
                        const DistanceMetric& metric);
 
+        amp::Path plan_with_moving_obs(const Eigen::VectorXd& init_state, 
+                           const Eigen::VectorXd& goal_state, 
+                           const amp::ConfigurationSpace& collision_checker,
+                           const DistanceMetric& metric,
+                           const std::vector<amp::Path>& prev_paths);
+
                        
         // for viz
         std::shared_ptr<amp::Graph<double>> getLastGraph() const;
         std::map<amp::Node, Eigen::Vector2d> getLastNodes() const;
+        int getLastTreeSize() const;
     private:
         int m_max_iterations;
         double m_step_size;

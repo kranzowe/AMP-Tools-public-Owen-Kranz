@@ -89,8 +89,8 @@ bool MyPointAndDiscCollisionChecker::inCollision(const Eigen::VectorXd& config) 
             //sample 16 points on each robot edge.
             // LOG("point[0] "<< point[0]);
             // LOG("m_moving_circular_obstacles[i].moving_circular_primative.radius" << m_moving_circular_obstacles[i].moving_circular_primative.radius);
-            Eigen::Vector2d outer_point{point[0] + (cos(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius), 
-                point[1] + (sin(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius)};
+            Eigen::Vector2d outer_point{point[0] + (cos(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius*1.05), 
+                point[1] + (sin(theta)*m_moving_circular_obstacles[i].moving_circular_primative.radius*1.05)};
                 
                 points_to_check.push_back(outer_point);
                 
@@ -330,6 +330,9 @@ std::map<amp::Node, Eigen::Vector2d> GenericPRM::getLastNodes() const {
     return m_last_nodes;
 }
 
+int GenericRRT::getLastTreeSize() const {
+    return m_last_nodes.size();  // This gives you the number of nodes in the tree
+}
 // NDim rrt
 GenericRRT::GenericRRT(int max_iterations, double step_size, double goal_bias)
     : m_max_iterations(max_iterations), m_step_size(step_size), m_goal_bias(goal_bias) {}
@@ -457,12 +460,199 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
     }
 
     // AI helped me store stuff to visualize later so i can see the pretty graphs
+    LOG("Points size before: " << points.size());
     m_last_graph = graphPtr;
     m_last_nodes.clear();
     for (amp::Node i = 0; i < points.size(); ++i) {
         m_last_nodes[i] = Eigen::Vector2d(points[i][0], points[i][1]);
     }
+    LOG("m_last_nodes size after storing: " << m_last_nodes.size());
+    // add points
+    amp::Path path;
+    std::map<amp::Node, amp::Node> parent_map;
+    for (const auto& [parent, child, weight] : edges) {
+        parent_map[child] = parent;
+    }
 
+    amp::Node current_node_id = points.size() - 1; // goal is last
+    // std::cout << "current id:" << current_node_id << std::endl;
+    while (current_node_id != 0) {
+        path.waypoints.push_back(points[current_node_id]);
+
+        // std::cout << "added:" <<points[current_node_id] << std::endl;
+        current_node_id = parent_map[current_node_id]; // parent from map
+        // std::cout << "current id:" << current_node_id << std::endl;
+
+    }
+    path.waypoints.push_back(init_state);
+    std::reverse(path.waypoints.begin(), path.waypoints.end());
+
+    return path;
+}
+
+/////////////////////////////////////////// PLANNING WITH NEW THINGS
+amp::Path GenericRRT::plan_with_moving_obs(const Eigen::VectorXd& init_state, 
+                           const Eigen::VectorXd& goal_state, 
+                           const amp::ConfigurationSpace& collision_checker,
+                           const DistanceMetric& metric,
+                           const std::vector<amp::Path>& prev_paths) {
+    
+    
+    // bounds for generating random samples 
+    Eigen::VectorXd min_vector = collision_checker.lowerBounds();
+    //LOG("MIN vec " << min_vector);
+    Eigen::VectorXd max_vector = collision_checker.upperBounds();
+    //LOG("Max vec " << max_vector);
+    
+    std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
+    
+    // graph stuff
+    std::vector<Eigen::VectorXd> points;
+    std::vector<std::tuple<amp::Node, amp::Node, double>> edges = {};
+    // STILL GOTTA PUSH BACK THIS INIT POINT
+
+    points.insert(points.begin(), init_state); // rrt starts from init and branches from there
+    
+    int dim = init_state.size();
+    int samples = 0;
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
+    //start samplign
+    while (samples < m_max_iterations){
+        Eigen::VectorXd random_point(dim);
+        
+        // AI helped with randomness here
+        std::uniform_real_distribution<double> uniform_dist(0.0, 1.0);
+        double rando_0to1 = uniform_dist(gen);
+        if (rando_0to1 < m_goal_bias){
+            random_point = goal_state;
+        }else{ // do traditional sampling
+            for (int i = 0; i < dim; ++i) {
+                std::uniform_real_distribution<double> dist(min_vector[i], max_vector[i]);
+                random_point[i] = dist(gen);
+            }
+        }
+        
+        // LOG("Rando point" << random_point);
+        // nearest neighbor
+        double min_distance = 1e8;
+        Eigen::VectorXd nearest_point(dim);
+        amp::Node nearest_node_id;
+
+        // steer towards
+
+        for (int i = 0; i < points.size(); i++) {
+            double dist = metric.distance(random_point, points[i]);
+            if (dist < min_distance){
+                nearest_point = points[i];
+                nearest_node_id = i;
+                min_distance = dist;
+            }
+        }
+
+        // LOG("NEAREST " << nearest_point);
+
+        Eigen::VectorXd proposed_point(dim);
+
+        
+        if (min_distance < m_step_size){
+            proposed_point = random_point;
+        }else{
+            // need to just move it a bit by step
+            Eigen::VectorXd unit_vec_dir = (random_point - nearest_point).normalized();
+            proposed_point = nearest_point + (m_step_size * unit_vec_dir);
+        }
+
+        // LOG("PROPOSED " << proposed_point);
+
+        ///// Gotta add poroposed to graph and see how many steps it takes to get there
+        std::vector<std::tuple<amp::Node, amp::Node, double>>test_edges = edges;
+        amp::Node proposed_node_id = points.size();
+        test_edges.push_back({nearest_node_id, proposed_node_id, 0.0});
+        // now only for visualizations
+        std::shared_ptr<amp::Graph<double>> tempgraphPtr = std::make_shared<amp::Graph<double>>();
+        for (const auto& [from, to, weight] : test_edges) { // add to graph
+            tempgraphPtr->connect(from, to, weight);
+        }
+        int num_rents = tempgraphPtr->parents(proposed_node_id).size();
+        LOG("NUMBER OF PARENTS IS "<< num_rents);
+
+        std::cin.get();
+
+
+        
+        
+        // check collisionsss
+        // need to reconstruct the full config to properly check collision
+        Eigen::VectorXd full_config(dim + (dim * prev_paths.size()));
+        
+        full_config[0] = proposed_point[0];
+        full_config[1] = proposed_point[1];
+        int y = 1;
+        for (amp::Path path : prev_paths){
+            full_config[2*y] = path.waypoints[num_rents][0];
+            full_config[2*y + 1] = path.waypoints[num_rents][1];
+            y++;
+        }
+        LOG("full config is now "<< full_config);
+        
+        const MyPointAndDiscCollisionChecker* my_checker = dynamic_cast<const MyPointAndDiscCollisionChecker*>(&collision_checker);
+
+
+        if (!collision_checker.inCollision(proposed_point)){
+            LOG("NO POINT COLL");
+
+            bool edge_collision = false;
+            if (my_checker) {
+                edge_collision = my_checker->edgeInCollision(nearest_point, proposed_point);
+            }else{
+                LOG("CAST ERRRORRR");
+            }
+            
+            if (!edge_collision) {
+                // LOG("NO EDGE COLL");
+                points.push_back(proposed_point);
+                amp::Node proposed_node_id = points.size() - 1;
+
+                // calculate the correct edge weight first
+                double edge_weight = metric.distance(nearest_point, proposed_point);
+                edges.push_back({nearest_node_id, proposed_node_id, edge_weight}); 
+
+                double dist_to_goal = metric.distance(proposed_point, goal_state);
+                if(dist_to_goal < 0.25){
+                    // good enough for me
+                    points.push_back(goal_state);
+                    amp::Node goal_node_id = points.size() - 1;
+                    
+                    // Add edge from proposed_point to goal_state
+                    double goal_edge_weight = metric.distance(proposed_point, goal_state);
+                    edges.push_back({proposed_node_id, goal_node_id, goal_edge_weight}); 
+
+                    break;
+                }
+
+            }//else{LOG("FOUND EDGE COLLISION");}
+        }
+        //else{LOG("FOUND POINT COLLISION");}
+        samples++;
+        // std::cin.get();
+    }
+
+    // now only for visualizations
+    for (const auto& [from, to, weight] : edges) { // add to graph
+        graphPtr->connect(from, to, weight);
+    }
+
+    // AI helped me store stuff to visualize later so i can see the pretty graphs
+    LOG("Points size before: " << points.size());
+    m_last_graph = graphPtr;
+    m_last_nodes.clear();
+    for (amp::Node i = 0; i < points.size(); ++i) {
+        m_last_nodes[i] = Eigen::Vector2d(points[i][0], points[i][1]);
+    }
+    LOG("m_last_nodes size after storing: " << m_last_nodes.size());
     // add points
     amp::Path path;
     std::map<amp::Node, amp::Node> parent_map;

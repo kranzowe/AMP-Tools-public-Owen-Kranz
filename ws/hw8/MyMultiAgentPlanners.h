@@ -14,10 +14,21 @@
 class MyCentralPlanner : public amp::CentralizedMultiAgentRRT {
     public:
         virtual amp::MultiAgentPath2D plan(const amp::MultiAgentProblem2D& problem) override; 
+
+        int getLastTreeSize() const;
+
+    private:
+        GenericRRT m_rrt;
 };
 
 
 class MyDecentralPlanner : public amp::DecentralizedMultiAgentRRT {
     public:
         virtual amp::MultiAgentPath2D plan(const amp::MultiAgentProblem2D& problem) override;
+
+    int getLastTreeSize() const;
+
+    private:
+        std::vector<GenericRRT> m_all_rrt;
+
 };

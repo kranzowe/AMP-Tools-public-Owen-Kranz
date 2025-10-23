@@ -23,7 +23,7 @@ void problem1(){
 
     // Part (b): Solve for m=2 with specific parameters
     MultiAgentProblem2D problem_m2 = HW8::getWorkspace1(2);
-    MyCentralPlanner central_planner_b(7500, 0.5, 0.25);  // n=7500, r=0.5, p_goal=0.25
+    MyCentralPlanner central_planner_b;  // n=7500, r=0.5, p_goal=0.25
     MultiAgentPath2D path_b = central_planner_b.plan(problem_m2);
     std::vector<std::vector<Eigen::Vector2d>> collision_states_b;
     bool isValid_b = HW8::check(path_b, problem_m2, collision_states_b);
@@ -45,11 +45,11 @@ void problem1(){
         std::vector<std::string> setting_labels;
         
         // Single setting for this agent count (you can add more settings if needed)
-        int num_samples = 7500;
-        double connection_radius = 0.5;
-        double goal_bias = 0.25;
+        // int num_samples = 7500;
+        // double connection_radius = 0.5;
+        // double goal_bias = 0.25;
         
-        MyCentralPlanner central_planner(num_samples, connection_radius, goal_bias);
+        MyCentralPlanner central_planner;
         
         std::vector<double> runtimes;
         std::vector<double> tree_sizes;
@@ -171,22 +171,27 @@ void problem1(){
 
 int main(int argc, char** argv) {
     // Initializing workspace 1 with 3 agents
-    amp::RNG::seed(amp::RNG::randiUnbounded());
-    MultiAgentPath2D path;
-    MultiAgentProblem2D problem = HW8::getWorkspace1(6);
-    std::vector<std::vector<Eigen::Vector2d>> collision_states;
+    //problem1();
+    // amp::RNG::seed(amp::RNG::randiUnbounded());
+    // MultiAgentPath2D path;
+    // MultiAgentProblem2D problem = HW8::getWorkspace1(6);
+    // std::vector<std::vector<Eigen::Vector2d>> collision_states;
 
-    // Solve using a centralized approach
-    MyCentralPlanner central_planner;
-    path = central_planner.plan(problem);
-    bool isValid = HW8::check(path, problem, collision_states);
-    Visualizer::makeFigure(problem, path, collision_states);
+    // // Solve using a centralized approach
+    // MyCentralPlanner central_planner;
+    // path = central_planner.plan(problem);
+    // bool isValid = HW8::check(path, problem, collision_states);
+    // Visualizer::makeFigure(problem, path, collision_states);
 
     // // Solve using a decentralized approach
-    // MyDecentralPlanner decentral_planner;
+    MultiAgentProblem2D problem = HW8::getWorkspace1(2);
+    MyDecentralPlanner decentral_planner;
+    MultiAgentPath2D path;
+    path = decentral_planner.plan(problem);
+    std::vector<std::vector<Eigen::Vector2d>> collision_states;
     // collision_states = {{}};
-    // HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
-    // Visualizer::makeFigure(problem, path, collision_states);
+    HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
+    Visualizer::makeFigure(problem, path, collision_states);
 
     // // Visualize and grade methods
     Visualizer::saveFigures(true, "hw8_figs");
