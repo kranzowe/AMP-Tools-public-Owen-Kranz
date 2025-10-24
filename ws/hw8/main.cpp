@@ -98,15 +98,15 @@ void problem1(){
         setting_labels_by_m[m] = setting_labels;
         
         // Create individual boxplots for each m
-        Visualizer::makeBoxPlot(runtime_data, setting_labels, 
-                            "Central Planner Runtime (m=" + std::to_string(m) + ")", 
-                            "Number of Agents", 
-                            "Runtime (ms)");
+        // Visualizer::makeBoxPlot(runtime_data, setting_labels, 
+        //                     "Central Planner Runtime (m=" + std::to_string(m) + ")", 
+        //                     "Number of Agents", 
+        //                     "Runtime (ms)");
         
-        Visualizer::makeBoxPlot(tree_size_data, setting_labels, 
-                            "Central Planner Tree Size (m=" + std::to_string(m) + ")", 
-                            "Number of Agents", 
-                            "Tree Size (nodes)");
+        // Visualizer::makeBoxPlot(tree_size_data, setting_labels, 
+        //                     "Central Planner Tree Size (m=" + std::to_string(m) + ")", 
+        //                     "Number of Agents", 
+        //                     "Tree Size (nodes)");
     }
 
     // Part (e): Compute averages and print for Excel plotting
@@ -248,15 +248,15 @@ void problem2(){
         setting_labels_by_m[m] = setting_labels;
         
         //Create individual boxplots for each m
-        Visualizer::makeBoxPlot(runtime_data, setting_labels, 
-                            "Central Planner Runtime (m=" + std::to_string(m) + ")", 
-                            "Number of Agents", 
-                            "Runtime (ms)");
+        // Visualizer::makeBoxPlot(runtime_data, setting_labels, 
+        //                     "Central Planner Runtime (m=" + std::to_string(m) + ")", 
+        //                     "Number of Agents", 
+        //                     "Runtime (ms)");
         
-        Visualizer::makeBoxPlot(tree_size_data, setting_labels, 
-                            "Central Planner Tree Size (m=" + std::to_string(m) + ")", 
-                            "Number of Agents", 
-                            "Tree Size (nodes)");
+        // Visualizer::makeBoxPlot(tree_size_data, setting_labels, 
+        //                     "Central Planner Tree Size (m=" + std::to_string(m) + ")", 
+        //                     "Number of Agents", 
+        //                     "Tree Size (nodes)");
     }
 
     // Part (e): Compute averages and print for Excel plotting
@@ -321,7 +321,7 @@ void problem2(){
 
 int main(int argc, char** argv) {
     // Initializing workspace 1 with 3 agents
-    //problem1();
+    problem1();
     //problem2();
     // amp::RNG::seed(amp::RNG::randiUnbounded());
     // MultiAgentPath2D path;
@@ -346,7 +346,7 @@ int main(int argc, char** argv) {
     // Visualizer::makeFigure(problem, path, collision_states);
 
     // // Visualize and grade methods
-    //Visualizer::saveFigures(true, "hw8_figs");
-    HW8::grade<MyCentralPlanner, MyDecentralPlanner>("owen.kranz@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    Visualizer::saveFigures(true, "hw8_figs");
+    //HW8::grade<MyCentralPlanner, MyDecentralPlanner>("owen.kranz@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }
