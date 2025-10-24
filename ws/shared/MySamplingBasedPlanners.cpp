@@ -101,7 +101,7 @@ bool MyPointAndDiscCollisionChecker::inCollision(const Eigen::VectorXd& config) 
     //     LOG("DISC CENTERS :" << t);
     // }
     // LOG("++++++");
-    
+    // std::cin.get();
     for (auto point : points_to_check){
         // LOG("checking collision with :" << point[0] << ", " << point[1]);
         // check for collisions with obstacels
@@ -460,13 +460,13 @@ amp::Path GenericRRT::plan(const Eigen::VectorXd& init_state,
     }
 
     // AI helped me store stuff to visualize later so i can see the pretty graphs
-    LOG("Points size before: " << points.size());
+    //LOG("Points size before: " << points.size());
     m_last_graph = graphPtr;
     m_last_nodes.clear();
     for (amp::Node i = 0; i < points.size(); ++i) {
         m_last_nodes[i] = Eigen::Vector2d(points[i][0], points[i][1]);
     }
-    LOG("m_last_nodes size after storing: " << m_last_nodes.size());
+    //LOG("m_last_nodes size after storing: " << m_last_nodes.size());
     // add points
     amp::Path path;
     std::map<amp::Node, amp::Node> parent_map;
@@ -568,45 +568,73 @@ amp::Path GenericRRT::plan_with_moving_obs(const Eigen::VectorXd& init_state,
         // LOG("PROPOSED " << proposed_point);
 
         ///// Gotta add poroposed to graph and see how many steps it takes to get there
-        std::vector<std::tuple<amp::Node, amp::Node, double>>test_edges = edges;
+        std::vector<std::tuple<amp::Node, amp::Node, double>> test_edges = edges;
         amp::Node proposed_node_id = points.size();
         test_edges.push_back({nearest_node_id, proposed_node_id, 0.0});
-        // now only for visualizations
-        std::shared_ptr<amp::Graph<double>> tempgraphPtr = std::make_shared<amp::Graph<double>>();
-        for (const auto& [from, to, weight] : test_edges) { // add to graph
-            tempgraphPtr->connect(from, to, weight);
-        }
-        int num_rents = tempgraphPtr->parents(proposed_node_id).size();
-        LOG("NUMBER OF PARENTS IS "<< num_rents);
 
-        std::cin.get();
+        // Calculate depth by tracing back through parent chain
+        std::map<amp::Node, amp::Node> parent_map;
+        for (const auto& [parent, child, weight] : test_edges) {
+            parent_map[child] = parent;
+        }
+
+        // Count steps from root (node 0) to proposed node
+        int depth = 0;
+        amp::Node current = proposed_node_id;
+        while (current != 0 && parent_map.find(current) != parent_map.end()) {
+            current = parent_map[current];
+            depth++;
+        }
+
+        // LOG("DEPTH/STEPS TO PROPOSED NODE: " << depth);
+        //std::cin.get();
 
 
         
         
         // check collisionsss
         // need to reconstruct the full config to properly check collision
-        Eigen::VectorXd full_config(dim + (dim * prev_paths.size()));
+        Eigen::VectorXd proposed_full_config(dim + (dim * prev_paths.size()));
+        Eigen::VectorXd nearest_full_config(dim + (dim * prev_paths.size()));
         
-        full_config[0] = proposed_point[0];
-        full_config[1] = proposed_point[1];
+        proposed_full_config[0] = proposed_point[0];
+        proposed_full_config[1] = proposed_point[1];
+        nearest_full_config[0] = nearest_point[0];
+        nearest_full_config[1] = nearest_point[1];
         int y = 1;
         for (amp::Path path : prev_paths){
-            full_config[2*y] = path.waypoints[num_rents][0];
-            full_config[2*y + 1] = path.waypoints[num_rents][1];
+            if (depth >= path.waypoints.size()){
+                // if this trace is taking longer than others, just
+                // hold the other traces at their end config
+                proposed_full_config[2*y] = path.waypoints[path.waypoints.size()-1][0];
+                proposed_full_config[2*y + 1] = path.waypoints[path.waypoints.size()-1][1];
+                nearest_full_config[2*y] = path.waypoints[path.waypoints.size()-1][0];
+                nearest_full_config[2*y + 1] = path.waypoints[path.waypoints.size()-1][1];
+            }else if(depth == 0){
+                // if trace at start, just call the start config for both
+                proposed_full_config[2*y] = path.waypoints[depth][0];
+                proposed_full_config[2*y + 1] = path.waypoints[depth][1];
+                nearest_full_config[2*y] = path.waypoints[depth][0];
+                nearest_full_config[2*y + 1] = path.waypoints[depth][1];
+            }else{
+                proposed_full_config[2*y] = path.waypoints[depth][0];
+                proposed_full_config[2*y + 1] = path.waypoints[depth][1];
+                nearest_full_config[2*y] = path.waypoints[depth-1][0];
+                nearest_full_config[2*y + 1] = path.waypoints[depth-1][1];
+            }
             y++;
         }
-        LOG("full config is now "<< full_config);
+        // LOG("full config is now "<< proposed_full_config);
         
         const MyPointAndDiscCollisionChecker* my_checker = dynamic_cast<const MyPointAndDiscCollisionChecker*>(&collision_checker);
 
 
-        if (!collision_checker.inCollision(proposed_point)){
-            LOG("NO POINT COLL");
+        if (!collision_checker.inCollision(proposed_full_config)){
+            // LOG("NO POINT COLL");
 
             bool edge_collision = false;
             if (my_checker) {
-                edge_collision = my_checker->edgeInCollision(nearest_point, proposed_point);
+                edge_collision = my_checker->edgeInCollision(nearest_full_config, proposed_full_config);
             }else{
                 LOG("CAST ERRRORRR");
             }
@@ -646,13 +674,13 @@ amp::Path GenericRRT::plan_with_moving_obs(const Eigen::VectorXd& init_state,
     }
 
     // AI helped me store stuff to visualize later so i can see the pretty graphs
-    LOG("Points size before: " << points.size());
+    //LOG("Points size before: " << points.size());
     m_last_graph = graphPtr;
     m_last_nodes.clear();
     for (amp::Node i = 0; i < points.size(); ++i) {
         m_last_nodes[i] = Eigen::Vector2d(points[i][0], points[i][1]);
     }
-    LOG("m_last_nodes size after storing: " << m_last_nodes.size());
+    //LOG("m_last_nodes size after storing: " << m_last_nodes.size());
     // add points
     amp::Path path;
     std::map<amp::Node, amp::Node> parent_map;
