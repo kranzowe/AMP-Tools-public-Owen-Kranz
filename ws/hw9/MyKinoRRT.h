@@ -9,12 +9,19 @@
 class MyKinoRRT : public amp::KinodynamicRRT {
     public:
         virtual amp::KinoPath plan(const amp::KinodynamicProblem2D& problem, amp::DynamicAgent& agent) override;
+
+    
 };  
+
 
 class MySingleIntegrator : public amp::DynamicAgent {
     public:
         virtual void propagate(Eigen::VectorXd& state, Eigen::VectorXd& control, double dt) override;
-};
+
+    private:
+        Eigen::Matrix<double,2,2> A(Eigen::VectorXd state);
+        Eigen::Matrix<double,2,2> B(Eigen::VectorXd state);
+    };
 
 class MyFirstOrderUnicycle : public amp::DynamicAgent {
     public:

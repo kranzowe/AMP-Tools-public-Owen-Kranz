@@ -321,7 +321,7 @@ void problem2(){
 
 int main(int argc, char** argv) {
     // Initializing workspace 1 with 3 agents
-    problem1();
+    //problem1();
     //problem2();
     // amp::RNG::seed(amp::RNG::randiUnbounded());
     // MultiAgentPath2D path;
@@ -334,19 +334,19 @@ int main(int argc, char** argv) {
     // bool isValid = HW8::check(path, problem, collision_states);
     // Visualizer::makeFigure(problem, path, collision_states);
 
-    // // // Solve using a decentralized approach
-    // MultiAgentProblem2D problem = HW8::getWorkspace1(3);
+    // // // // Solve using a decentralized approach
+    // // MultiAgentProblem2D problem = HW8::getWorkspace1(3);
     // MyDecentralPlanner decentral_planner;
-    // MultiAgentPath2D path;
+    // // MultiAgentPath2D path;
     // path = decentral_planner.plan(problem);
-    // std::vector<std::vector<Eigen::Vector2d>> collision_states;
-    // // collision_states = {{}};
-    // bool isValid = HW8::check(path, problem, collision_states);
+    // // std::vector<std::vector<Eigen::Vector2d>> collision_states;
+    // collision_states = {{}};
+    // bool isValidy = HW8::check(path, problem, collision_states);
     // // HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
     // Visualizer::makeFigure(problem, path, collision_states);
 
-    // // Visualize and grade methods
-    Visualizer::saveFigures(true, "hw8_figs");
-    //HW8::grade<MyCentralPlanner, MyDecentralPlanner>("owen.kranz@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
+    // // // Visualize and grade methods
+    // Visualizer::saveFigures(true, "hw8_figs");
+    HW8::grade<MyCentralPlanner, MyDecentralPlanner>("owen.kranz@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
     return 0;
 }
