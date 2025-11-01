@@ -90,6 +90,7 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
     // Tree data structures
     std::vector<Eigen::VectorXd> points;
     std::vector<Eigen::VectorXd> controls;
+    std::vector<double> durations;
     std::vector<std::tuple<amp::Node, amp::Node, double>> edges = {};
 
     points.insert(points.begin(), init_state);
@@ -136,6 +137,7 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
         // Try multiple random controls and keep the best one
         Eigen::VectorXd proposed_point(dim);
         Eigen::VectorXd proposed_control(problem.u_bounds.size());  // ← Use u_bounds size
+        double proposed_duration;
         double min_dist = 1e8;
         
         for (int i = 0; i < m_num_control_samples; i++) {
@@ -150,44 +152,49 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
             }
             
             Eigen::VectorXd test_point = nearest_point;
+
+            std::uniform_real_distribution<double> duration_dist(
+                problem.dt_bounds.first, 
+                problem.dt_bounds.second
+            );
+            double sampled_dt = duration_dist(gen);
             
-            // Propagate with fine-grained collision checking
+            // Propagate for the full time step
+            agent.propagate(test_point, control, sampled_dt);
+            
+            // Check collision at the final state
             bool trajectory_valid = true;
-            double trajectory_dt = m_dt / 30.0;
+            if (collision_checker.inCollision(test_point)) {
+                trajectory_valid = false;
+            }
+
+            // add points in points to check to collision checking
+            // add points in points to check to collision checking
+            if (!amp::points_to_check.empty()) {
+                for (size_t step = 0; step < amp::points_to_check.size(); step++) {
+                    // Check each corner point at this step
+                    for (const auto& corner_point : amp::points_to_check[step]) {
+                        if (collision_checker.inCollision(corner_point)) {
+                            trajectory_valid = false;
+                            break;
+                        }
+                    }
+                    if (!trajectory_valid) break;
+                    
+                    // Also check the center point (sub_state) if available
+                    if (step < amp::sub_states.size()) {
+                        if (collision_checker.inCollision(amp::sub_states[step])) {
+                            trajectory_valid = false;
+                            break;
+                        }
+                    }
+                }
+            }
             
-            for (int j = 0; j < 30; j++) {
-                agent.propagate(test_point, control, trajectory_dt);
-                
-                // Check all corner points and edges for collision
-                bool substep_collision = false;
-                for (const auto& corner_set : amp::points_to_check) {
-                    for (size_t k = 0; k < corner_set.size() && !substep_collision; k++) {
-                        // Check point collision
-                        if (collision_checker.inCollision(corner_set[k])) {
-                            substep_collision = true;
-                            break;
-                        }
-                        
-                        // Check edge collision between consecutive corners
-                        size_t next_k = (k + 1) % corner_set.size();
-                        if (collision_checker.edgeInCollision(corner_set[k], corner_set[next_k])) {
-                            substep_collision = true;
-                            break;
-                        }
-                    }
-                    if (substep_collision) break;
-                }
-                
-                // Also check bounds violations
-                for (int b = 0; b < test_point.rows(); b++) {
-                    if (test_point[b] < problem.q_bounds[b].first || 
-                        test_point[b] > problem.q_bounds[b].second) {
-                        substep_collision = true;
-                        break;
-                    }
-                }
-                
-                if (substep_collision) {
+            // Check bounds violations
+            for (int b = 0; b < test_point.rows(); b++) {
+                if (test_point[b] < problem.q_bounds[b].first || 
+                    test_point[b] > problem.q_bounds[b].second) {
                     trajectory_valid = false;
                     break;
                 }
@@ -199,6 +206,7 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
                 if (dist < min_dist) {
                     proposed_point = test_point;
                     proposed_control = control;
+                    proposed_duration = sampled_dt;
                     min_dist = dist;
                 }
             }
@@ -223,12 +231,13 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
             
             points.push_back(proposed_point);
             controls.push_back(proposed_control);
+            durations.push_back(proposed_duration);
             amp::Node proposed_node_id = points.size() - 1;
 
             double edge_weight = metric.distance(nearest_point, proposed_point);
             edges.push_back({nearest_node_id, proposed_node_id, edge_weight}); 
 
-            std::cout << "Added point " << proposed_node_id << ": (" << proposed_point[0] << ", " << proposed_point[1] << ")" << std::endl;
+            //std::cout << "Added point " << proposed_node_id << ": (" << proposed_point[0] << ", " << proposed_point[1] << ")" << std::endl;
 
             // Check if we've reached the goal region
             bool at_goal = true;
@@ -256,10 +265,10 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
     }
 
     // DEBUG: Print all points
-    std::cout << "\n=== ALL POINTS IN TREE ===" << std::endl;
-    for (size_t i = 0; i < points.size(); i++) {
-        std::cout << "Point " << i << ": (" << points[i][0] << ", " << points[i][1] << ")" << std::endl;
-    }
+    // std::cout << "\n=== ALL POINTS IN TREE ===" << std::endl;
+    // for (size_t i = 0; i < points.size(); i++) {
+    //     std::cout << "Point " << i << ": (" << points[i][0] << ", " << points[i][1] << ")" << std::endl;
+    // }
 
     if (!found_goal) {
         std::cout << "WARNING: Goal not reached!" << std::endl;
@@ -282,7 +291,7 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
     
     while (current_node_id != 0) {
         node_path.push_back(current_node_id);
-        std::cout << "Added node " << current_node_id << " to path" << std::endl;
+        //std::cout << "Added node " << current_node_id << " to path" << std::endl;
         
         if (parent_map.find(current_node_id) == parent_map.end()) {
             std::cout << "ERROR: No parent found for node " << current_node_id << std::endl;
@@ -300,7 +309,7 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
 
     // Build KinoPath
     amp::KinoPath path;
-    
+
     std::cout << "\n=== BUILDING KINOPATH WAYPOINTS ===" << std::endl;
     for (size_t i = 0; i < node_path.size(); i++) {
         amp::Node node_id = node_path[i];
@@ -314,23 +323,36 @@ amp::KinoPath MyKinoRRT::plan(const amp::KinodynamicProblem2D& problem, amp::Dyn
         std::cout << "Waypoint " << i << " (Node " << node_id << "): (" << waypoint[0] << ", " << waypoint[1] << ")" << std::endl;
         path.waypoints.push_back(waypoint);
         
-        // Add controls and durations (except for last waypoint)
-        if (i < node_path.size() - 1) {
+        // Control and duration pairing:
+        // - Initial waypoint (i=0): gets zero control/duration (nothing needed to get there)
+        // - Subsequent waypoints: get the control that was applied to reach them
+        if (i == 0) {
+            // Initial waypoint gets zero control and duration
+            Eigen::VectorXd zero_control = Eigen::VectorXd::Zero(problem.u_bounds.size());
+            path.controls.push_back(zero_control);
+            path.durations.push_back(0.0);
+            std::cout << "Initial waypoint: adding zero control and duration" << std::endl;
+        } else {
+            // For waypoint i, use the control that was applied to reach it
+            // This control was stored at the node_id when it was created
             if (node_id < controls.size()) {
+                std::cout << "Adding control[" << node_id << "] - control TO REACH node " << node_id << std::endl;
                 path.controls.push_back(controls[node_id]);
-                path.durations.push_back(m_dt);
+                path.durations.push_back(durations[node_id]);
             } else {
-                std::cout << "WARNING: No control for node " << node_id << std::endl;
+                std::cout << "ERROR: No control for node " << node_id << std::endl;
                 // Add zero control as fallback
-                Eigen::VectorXd zero_control = Eigen::VectorXd::Zero(2);
+                Eigen::VectorXd zero_control = Eigen::VectorXd::Zero(problem.u_bounds.size());
                 path.controls.push_back(zero_control);
-                path.durations.push_back(m_dt);
+                path.durations.push_back(0.0);
             }
         }
     }
 
     std::cout << "\n=== FINAL PATH INFO ===" << std::endl;
     std::cout << "Number of waypoints: " << path.waypoints.size() << std::endl;
+    std::cout << "Number of controls: " << path.controls.size() << std::endl;
+    std::cout << "Number of durations: " << path.durations.size() << std::endl;
     if (!path.waypoints.empty()) {
         std::cout << "First waypoint: (" << path.waypoints[0][0] << ", " << path.waypoints[0][1] << ")" << std::endl;
         std::cout << "Last waypoint: (" << path.waypoints.back()[0] << ", " << path.waypoints.back()[1] << ")" << std::endl;
