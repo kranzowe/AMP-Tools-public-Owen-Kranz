@@ -8,9 +8,14 @@
 
 class MyKinoRRT : public amp::KinodynamicRRT {
     public:
+        MyKinoRRT(double dt = 0.1, int num_control_samples = 10, int max_iterations = 5000, double stop_radius = 0.25);
         virtual amp::KinoPath plan(const amp::KinodynamicProblem2D& problem, amp::DynamicAgent& agent) override;
 
-    
+    private:
+        double m_dt;
+        int m_num_control_samples;
+        int m_max_iterations;
+        double m_stop_radius;
 };  
 
 

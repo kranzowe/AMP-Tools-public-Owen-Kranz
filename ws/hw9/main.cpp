@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     // Select problem, plan, check, and visualize
     int select = 0;
     KinodynamicProblem2D prob = problems[select];
-    MyKinoRRT kino_planner;
+    MyKinoRRT kino_planner(0.05, 20, 10000);
     KinoPath path = kino_planner.plan(prob, *agentFactory[prob.agent_type]());
     HW9::check(path, prob);
     if (path.valid)
